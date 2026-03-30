@@ -1,0 +1,16 @@
+opencv-python
+numpy
+pandas
+scikit-learn
+matplotlib
+torch
+torchvision
+tqdm
+scipy
+mediapipe==0.10.9
+streamlit
+plotly
+neurokit2
+xgboost
+seaborn
+pickle5
