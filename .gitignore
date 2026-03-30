@@ -1,0 +1,23 @@
+# Raw data - too large for GitHub
+Data/
+Results/faces/
+Results/faces_v2/
+Results/faces_v3/
+*.zip
+*.mp4
+*.csv
+
+# Keep biosignal CSVs but ignore raw data CSVs
+!Results/biosignals/
+!Experiments/splits/
+
+# Python
+__pycache__/
+*.pyc
+.DS_Store
+
+# PyCharm
+.idea/
+
+# Conda
+*.egg-info/
