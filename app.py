@@ -186,7 +186,8 @@ with col2:
                 border-radius:10px; padding:20px; text-align:center;">
         <h1 style="color:{color}; margin:0;">{pred_label}</h1>
         <p style="color:{color}; margin:5px 0;">Predicted Pain Level</p>
-        <h3 style="margin:10px 0;">{icon}  {confidence:.1f}% confidence</h3>
+        <h3 style="margin:10px 0;">{confidence:.1f}% confidence</h3>
+        <p style="color:{color}; margin:0;">{icon}</p>
         <p>True label: <b>{true_label}</b></p>
     </div>
     """, unsafe_allow_html=True)
