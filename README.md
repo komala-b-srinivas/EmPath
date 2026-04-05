@@ -8,7 +8,7 @@ EmPath is a multimodal pain classification system that distinguishes between PA2
 
 ## Live Demo
 
-[EmPath Demo](https://empath.streamlit.app) ← replace with your actual URL
+[EmPath Demo](https://komala-b-srinivas-empath-app-oxt9of.streamlit.app/) 
 
 ## Results
 
