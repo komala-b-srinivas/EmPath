@@ -1,4 +1,4 @@
-# EmPath — Multimodal Pain Intensity Detection
+# EmPath Multimodal Pain Intensity Detection
 
 Capstone Project | CSC 303 | Graduate Software Engineering
 
