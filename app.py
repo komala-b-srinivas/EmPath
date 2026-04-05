@@ -21,7 +21,8 @@ FEATURE_IMG   = os.path.join(BASE_DIR, "Results", "error_analysis", "feature_imp
 ROC_IMG       = os.path.join(BASE_DIR, "Results", "error_analysis", "roc_curve.png")
 SHAP_BIO_IMG  = os.path.join(BASE_DIR, "Results", "error_analysis", "shap_biosignal.png")
 SHAP_LM_IMG   = os.path.join(BASE_DIR, "Results", "error_analysis", "shap_landmarks.png")
-BIOSIG_DIR    = "/Users/komalabelursrinivas/Desktop/Capstone/EmPath/Data/Raw/biosignals_filtered"
+BIOSIG_DIR      = "/Users/komalabelursrinivas/Desktop/Capstone/EmPath/Data/Raw/biosignals_filtered"
+SIGNAL_PLOTS_DIR = os.path.join(BASE_DIR, "Models", "signal_plots")
 
 @st.cache_resource
 def load_model():
@@ -142,7 +143,12 @@ with col1:
     subject  = selected_sample.split("-")[0]
     bio_path = os.path.join(BIOSIG_DIR, subject, selected_sample + "_bio.csv")
 
-    if os.path.exists(bio_path):
+    # Try pre-generated plot first (works on cloud)
+    plot_path = os.path.join(SIGNAL_PLOTS_DIR, selected_sample + ".png")
+
+    if os.path.exists(plot_path):
+        st.image(plot_path, use_container_width=True)
+    elif os.path.exists(bio_path):
         raw_df = pd.read_csv(bio_path, sep="\t")
         fig = make_subplots(
             rows=3, cols=1,
@@ -153,30 +159,17 @@ with col1:
         )
         time = np.arange(len(raw_df)) / 512
         fig.add_trace(go.Scatter(x=time, y=raw_df["gsr"],
-            line=dict(color="#1976d2", width=1.5), name="GSR"), row=1, col=1)
+                                 line=dict(color="#1976d2", width=1.5), name="GSR"), row=1, col=1)
         fig.add_trace(go.Scatter(x=time, y=raw_df["ecg"],
-            line=dict(color="#d32f2f", width=1), name="ECG"), row=2, col=1)
+                                 line=dict(color="#d32f2f", width=1), name="ECG"), row=2, col=1)
         fig.add_trace(go.Scatter(x=time, y=raw_df["emg_corrugator"],
-            line=dict(color="#388e3c", width=1), name="EMG"), row=3, col=1)
+                                 line=dict(color="#388e3c", width=1), name="EMG"), row=3, col=1)
         fig.update_layout(height=400, showlegend=False,
                           margin=dict(l=0, r=0, t=40, b=0))
         fig.update_xaxes(title_text="Time (s)", row=3, col=1)
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.warning("Raw signal file not found.")
-        sig_data    = {col: samples[samples["sample_name"] == selected_sample].iloc[0][f"bio_{i}"]
-                       for i, col in enumerate(model["bio_cols"])}
-        key_signals = ["gsr_mean", "gsr_std", "gsr_slope",
-                       "ecg_mean", "ecg_std", "ecg_max",
-                       "emg_corr_mean", "emg_corr_std"]
-        key_vals    = [sig_data.get(k, 0) for k in key_signals]
-        bar_colors  = ["#1976d2" if "gsr" in k else
-                       "#d32f2f" if "ecg" in k else
-                       "#388e3c" for k in key_signals]
-        fig = go.Figure()
-        fig.add_trace(go.Bar(x=key_signals, y=key_vals, marker_color=bar_colors))
-        fig.update_layout(height=350, margin=dict(l=0, r=0, t=40, b=0))
-        st.plotly_chart(fig, use_container_width=True)
+        st.warning("Signal data not available.")
 
 with col2:
     st.subheader("Prediction")
