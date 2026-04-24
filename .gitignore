@@ -1,23 +1,55 @@
-# Raw data - too large for GitHub
-Data/
-Results/faces/
-Results/faces_v2/
-Results/faces_v3/
+# ==========================================
+# EmPath v2 — .gitignore
+# ==========================================
+
+# Raw BioVid dataset — 27.8 GB, store separately
+Data/Raw/
+
+# Extracted face images — 467 MB, regenerate with extract_faces scripts
+Results/faces_all67/
+
+# GNN raw landmark coordinates — 199 MB, regenerate with extract_landmarks_raw_coords.py
+Results/landmarks_gnn/raw_coords.npz
+
+# Intermediate biosignal outputs — not required for app or evaluation
+Results/biosignals_all67/
+Results/biosignals_all87/
+
+# Archive files
 *.zip
+
+# Video files
 *.mp4
-*.csv
+*.avi
+*.mov
 
-# Keep biosignal CSVs but ignore raw data CSVs
-!Results/biosignals/
-!Experiments/splits/
-
-# Python
+# Python cache
 __pycache__/
 *.pyc
-.DS_Store
-
-# PyCharm
-.idea/
-
-# Conda
+*.pyo
+*.pyd
 *.egg-info/
+dist/
+build/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE config
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Virtual environments
+.env
+venv/
+env/
+
+# Internal AI context file — not for public repo
+CLAUDE.md

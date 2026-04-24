@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EmPath v2 — Multimodal Pain Detection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:hidden}
+:root{
+  --bg:#00040e;
+  --c:#00d4ff;
+  --g:#00ff88;
+  --r:#ff3355;
+  --o:#ff8800;
+  --p:#9966ff;
+  --border:rgba(0,212,255,.12);
+  --text:rgba(210,235,255,.92);
+  --muted:rgba(100,150,190,.55);
+  --panel:rgba(0,8,22,.88);
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+
+/* ── fixed layers ── */
+#bg-canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
+#scanlines{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.05) 3px,rgba(0,0,0,.05) 4px)}
+#vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 40%,transparent 30%,rgba(0,4,14,.92) 100%)}
+#progress{position:fixed;top:0;left:0;height:2px;width:0%;z-index:200;
+  background:linear-gradient(90deg,var(--c),var(--g));
+  box-shadow:0 0 8px var(--c);transition:width .08s linear}
+
+/* ── top HUD ── */
+#hud{position:fixed;top:0;left:0;right:0;height:42px;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;border-bottom:1px solid var(--border);
+  background:rgba(0,4,14,.8);backdrop-filter:blur(14px);
+  font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.06em}
+.hud-logo{color:var(--c);font-weight:700;font-size:.68rem;letter-spacing:.18em;text-transform:uppercase}
+.hud-logo span{color:var(--muted);font-weight:300}
+.hud-right{display:flex;gap:1.8rem;color:var(--muted)}
+.hud-right b{color:var(--c)}
+.dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--g);
+  margin-right:.35rem;animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+
+/* ── layout ── */
+section{position:relative;z-index:10;padding:6rem 2.5rem 3.5rem;max-width:1360px;margin:0 auto}
+.sec-inner{width:100%}
+.hdiv{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:2rem 0}
+
+/* ── reveal ── */
+.r{opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease}
+.rl{opacity:0;transform:translateX(-26px);transition:opacity .6s ease,transform .6s ease}
+.rr{opacity:0;transform:translateX(26px);transition:opacity .6s ease,transform .6s ease}
+.r.in,.rl.in,.rr.in{opacity:1;transform:none}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}
+.d4{transition-delay:.4s}.d5{transition-delay:.5s}.d6{transition-delay:.6s}
+
+/* ── type ── */
+.sec-tag{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:600;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--c);
+  display:flex;align-items:center;gap:.55rem;margin-bottom:.9rem}
+.sec-tag::before{content:'';display:inline-block;width:22px;height:1px;background:var(--c);flex-shrink:0}
+.sec-num{color:rgba(0,212,255,.3)}
+h1{font-size:clamp(2.8rem,7vw,6.5rem);font-weight:900;line-height:.95;letter-spacing:-.04em}
+h2{font-size:clamp(1.5rem,3vw,2.4rem);font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.mono{font-family:'JetBrains Mono',monospace}
+.cyan{color:var(--c)}.green{color:var(--g)}.red{color:var(--r)}
+.orange{color:var(--o)}.purple{color:var(--p)}.muted{color:var(--muted)}
+
+/* ── glitch ── */
+.glitch{display:inline-block;animation:g-idle 7s ease-in-out infinite}
+@keyframes g-idle{0%,84%,100%{text-shadow:none;transform:none}
+  86%{text-shadow:-3px 0 var(--r),3px 0 var(--c);transform:translateX(-2px)}
+  88%{text-shadow:3px 0 var(--r),-3px 0 var(--c);transform:translateX(2px)}
+  90%{text-shadow:none;transform:none}}
+
+/* ── panel ── */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:2px;
+  padding:1.4rem;backdrop-filter:blur(18px);position:relative}
+.panel::before,.panel::after{content:'';position:absolute;width:12px;height:12px;pointer-events:none}
+.panel::before{top:-1px;left:-1px;border-top:1.5px solid var(--c);border-left:1.5px solid var(--c)}
+.panel::after{bottom:-1px;right:-1px;border-bottom:1.5px solid var(--c);border-right:1.5px solid var(--c)}
+.panel.pg::before,.panel.pg::after{border-color:var(--g)}
+.panel.pr::before,.panel.pr::after{border-color:var(--r)}
+.panel.pp::before,.panel.pp::after{border-color:var(--p)}
+.panel.po::before,.panel.po::after{border-color:var(--o)}
+
+/* ── grid ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.g6{display:grid;grid-template-columns:repeat(6,1fr);gap:.9rem}
+@media(max-width:1000px){.g6{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:660px){.g2,.g3,.g4,.g6{grid-template-columns:1fr}}
+
+/* ── stat ── */
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:3rem;font-weight:700;line-height:1;
+  color:var(--c);text-shadow:0 0 28px rgba(0,212,255,.4)}
+.stat-lab{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-top:.25rem}
+.stat-sub{font-size:.65rem;color:rgba(0,212,255,.4);font-family:'JetBrains Mono',monospace;margin-top:.1rem}
+
+/* ── kpi strip ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;
+  border:1px solid var(--border);border-radius:2px;overflow:hidden;margin-top:2.2rem}
+.kpi-cell{padding:.85rem 1rem;background:rgba(0,8,22,.85);text-align:center;border-right:1px solid var(--border)}
+.kpi-cell:last-child{border-right:none}
+.kpi-val{font-family:'JetBrains Mono',monospace;font-size:1.15rem;font-weight:700;color:var(--c)}
+.kpi-lab{font-size:.56rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:.2rem}
+.kpi-sub{font-size:.58rem;color:rgba(0,212,255,.32);font-family:'JetBrains Mono',monospace;margin-top:.08rem}
+@media(max-width:900px){.kpi-strip{grid-template-columns:repeat(3,1fr)}}
+
+/* ── prediction ── */
+.pred-label{font-family:'JetBrains Mono',monospace;font-size:3.2rem;font-weight:700;letter-spacing:-.04em;line-height:1}
+.conf-arc-wrap{position:relative;width:200px;margin:0 auto}
+.conf-arc-wrap svg{width:100%;height:auto}
+.conf-center{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);text-align:center}
+
+/* ── modality bar ── */
+.mbar-wrap{margin-bottom:.7rem}
+.mbar-header{display:flex;justify-content:space-between;margin-bottom:.22rem}
+.mbar-name{font-size:.7rem;color:#94b8d0}
+.mbar-vote{font-size:.68rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.mbar-track{height:9px;background:rgba(0,30,60,.6);border-radius:1px;overflow:hidden}
+.mbar-fill{height:100%;border-radius:1px;transition:width 1.2s cubic-bezier(.4,0,.2,1) .3s;width:0}
+.mbar-fill.in{width:var(--w)}
+
+/* ── plain english ── */
+.plain-box{background:rgba(50,30,100,.12);border:1px solid rgba(153,102,255,.2);
+  border-left:2px solid var(--p);border-radius:2px;padding:.9rem 1.1rem}
+.plain-label{font-size:.56rem;text-transform:uppercase;letter-spacing:.15em;color:var(--p);
+  font-family:'JetBrains Mono',monospace;margin-bottom:.35rem}
+.plain-text{font-size:.82rem;color:#dde8f8;line-height:1.75}
+
+/* ── dim bars ── */
+.dim-row{margin-bottom:.45rem;display:flex;align-items:center;gap:.6rem}
+.dim-name{font-size:.65rem;color:var(--muted);font-family:'JetBrains Mono',monospace;flex:0 0 90px}
+.dim-track{flex:1;height:7px;background:rgba(0,30,60,.6);border-radius:1px;overflow:hidden}
+.dim-fill{height:100%;border-radius:1px}
+.dim-val{font-size:.65rem;color:var(--c);font-family:'JetBrains Mono',monospace;flex:0 0 42px;text-align:right}
+
+/* ── shap bars ── */
+.sb-row{margin-bottom:.52rem}
+.sb-header{display:flex;justify-content:space-between;margin-bottom:.24rem}
+.sb-name{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:#94b8d0}
+.sb-val{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--c);font-weight:600}
+.sb-track{height:7px;background:rgba(0,30,60,.6);border-radius:1px;overflow:hidden}
+.sb-fill{height:100%;border-radius:1px;transition:width 1.1s cubic-bezier(.4,0,.2,1) .2s;width:0}
+.sb-fill.in{width:var(--w)}
+
+/* ── data table ── */
+.dt{width:100%;border-collapse:collapse;font-size:.72rem}
+.dt th{text-align:left;padding:.4rem .6rem;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace}
+.dt td{padding:.48rem .6rem;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top}
+.dt tr:hover td{background:rgba(0,212,255,.025)}
+
+/* ── tier card ── */
+.tier{padding:.85rem 1rem;border-left:2px solid var(--tc,var(--c));border-radius:0 2px 2px 0;
+  background:rgba(0,8,20,.6);display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem}
+.tier-n{font-family:'JetBrains Mono',monospace;font-size:2.2rem;font-weight:700;color:var(--tc,var(--c));line-height:1}
+.tier-lab{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:.1rem}
+.tier-pct{font-size:1rem;font-weight:700;color:var(--tc,var(--c));opacity:.45;font-family:'JetBrains Mono',monospace}
+
+/* ── insight ── */
+.insight{padding:.85rem 1.1rem;border-left:2px solid var(--ic,var(--c));
+  background:rgba(0,212,255,.035);border-radius:0 2px 2px 0}
+.insight.ig{--ic:var(--g);background:rgba(0,255,136,.03)}
+.insight.ip{--ic:var(--p);background:rgba(153,102,255,.04)}
+.insight-lab{font-size:.56rem;text-transform:uppercase;letter-spacing:.15em;color:var(--ic,var(--c));
+  font-family:'JetBrains Mono',monospace;margin-bottom:.3rem}
+.insight p{font-size:.77rem;color:#94b8d0;line-height:1.7;margin:0}
+
+/* ── exp rows ── */
+.exp-row{display:flex;align-items:center;gap:.75rem;padding:.5rem .7rem;border-radius:2px;margin-bottom:2px;transition:background .18s}
+.exp-row:hover{background:rgba(0,212,255,.04)}
+.exp-row.best{background:rgba(0,212,255,.07);border-left:2px solid var(--c);padding-left:.5rem}
+.exp-name{font-family:'JetBrains Mono',monospace;font-size:.67rem;color:#94b8d0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-row.best .exp-name{color:var(--c);font-weight:600}
+.exp-badge{font-size:.55rem;padding:1px 5px;border-radius:2px;font-family:'JetBrains Mono',monospace;
+  font-weight:600;text-transform:uppercase;letter-spacing:.08em;flex:0 0 auto;border:1px solid currentColor}
+.exp-track{flex:0 0 180px;height:6px;background:rgba(0,30,60,.5);border-radius:1px;overflow:hidden}
+.exp-bar{height:100%;border-radius:1px;transition:width 1s ease .3s;width:0}
+.exp-bar.in{width:var(--w)}
+.exp-acc{font-family:'JetBrains Mono',monospace;font-size:.67rem;color:var(--muted);flex:0 0 46px;text-align:right}
+.exp-row.best .exp-acc{color:var(--c);font-weight:700}
+.exp-std{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);flex:0 0 52px;text-align:right}
+
+/* ── pipe step ── */
+.pipe-step{padding:1.1rem;border:1px solid var(--border);border-radius:2px;
+  background:rgba(0,8,22,.7);position:relative;transition:border-color .25s}
+.pipe-step:hover{border-color:rgba(0,212,255,.35)}
+.pipe-num{position:absolute;top:-11px;left:.9rem;font-family:'JetBrains Mono',monospace;
+  font-size:.6rem;font-weight:700;padding:1px 7px;border-radius:2px;border:1px solid currentColor;background:var(--bg)}
+.pipe-title{font-size:.85rem;font-weight:700;margin:.35rem 0 .15rem}
+.pipe-sub{font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.45rem}
+.pipe-body{font-size:.7rem;color:var(--muted);line-height:1.65}
+
+/* ── hw row ── */
+.hw{display:flex;gap:.8rem;padding:.8rem .9rem;border:1px solid rgba(0,212,255,.07);
+  border-left:2px solid var(--hc,var(--c));border-radius:0 2px 2px 0;margin-bottom:.45rem;background:rgba(0,8,20,.5)}
+.hw-pri{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;color:var(--hc,var(--c));
+  background:rgba(0,0,0,.35);border:1px solid currentColor;border-radius:2px;
+  padding:1px 5px;height:fit-content;min-width:24px;text-align:center}
+.hw-name{font-weight:700;font-size:.85rem;margin-bottom:.12rem}
+.hw-what{font-size:.7rem;color:var(--muted);line-height:1.5;margin-bottom:.1rem}
+.hw-why{font-size:.65rem;color:var(--hc,var(--c));opacity:.7}
+
+/* ── lit table ── */
+.lit{width:100%;border-collapse:collapse;font-size:.76rem}
+.lit th{text-align:left;padding:.45rem .55rem;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace}
+.lit td{padding:.5rem .55rem;border-bottom:1px solid rgba(255,255,255,.04)}
+.lit tr.ours td{color:var(--c);font-weight:700}
+.lit tr.ours{background:rgba(0,212,255,.055)}
+
+/* ── cm ── */
+.cm-cell{padding:1rem .5rem;text-align:center;border-radius:2px}
+.cm-n{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;line-height:1}
+.cm-pct{font-size:.68rem;margin-top:.18rem;opacity:.72}
+.cm-lab{font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;margin-top:.25rem}
+
+/* ── tag ── */
+.tag{display:inline-block;padding:2px 9px;border:1px solid var(--border);border-radius:2px;
+  font-size:.58rem;font-family:'JetBrains Mono',monospace;color:var(--muted);margin:2px}
+.tg{border-color:rgba(0,255,136,.2);color:var(--g)}
+.tp{border-color:rgba(153,102,255,.2);color:var(--p)}
+.to{border-color:rgba(255,136,0,.2);color:var(--o)}
+.tr{border-color:rgba(255,51,85,.2);color:var(--r)}
+
+/* ── footer ── */
+footer{position:relative;z-index:10;border-top:1px solid var(--border);
+  padding:1.8rem 2.5rem;display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:1rem;background:rgba(0,4,14,.92);
+  font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+<div id="progress"></div>
+
+<div id="hud">
+  <div class="hud-logo">EmPath <span>v2 //</span> Pain Detection System</div>
+  <div class="hud-right">
+    <span><span class="dot"></span>SYSTEM <b>ONLINE</b></span>
+    <span>LOSO-67 <b>65.3%</b></span>
+    <span>PROTOCOL <b>PA2 / PA3</b></span>
+    <span id="hud-frame">FRAME <b>000</b></span>
+  </div>
+</div>
+
+
+<!-- ═══════════════ 01 · HERO ═══════════════ -->
+<section>
+  <div class="sec-inner">
+    <div class="sec-tag r"><span class="sec-num">01 //</span> System Overview</div>
+
+    <div style="display:grid;grid-template-columns:1fr auto;gap:3rem;align-items:start;flex-wrap:wrap">
+      <div>
+        <h1 class="r d1">
+          <span class="glitch cyan">65.3%</span><br>
+          <span style="color:rgba(210,235,255,.6);font-size:.52em;font-weight:300;letter-spacing:-.01em">LOSO Accuracy</span>
+        </h1>
+        <p class="r d2" style="font-size:.95rem;color:var(--muted);max-width:560px;line-height:1.75;margin-top:1.1rem">
+          Subject-independent pain classification on the <b style="color:var(--text)">BioVid Heat Pain Database</b>.
+          67 reactive subjects evaluated with Leave-One-Subject-Out cross-validation.
+          PA2 (~43°C) vs PA3 (~45°C) — only 1°C apart, the hardest adjacent pair in the literature.
+          Stacked RF fusion of physiological biosignals and MediaPipe facial geometry.
+        </p>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1.1rem" class="r d3">
+          <span class="tag cyan">LOSO-67 Reactive</span>
+          <span class="tag tg">SHAP Explained</span>
+          <span class="tag tp">5 Novel Contributions</span>
+          <span class="tag to">Multimodal Fusion</span>
+          <span class="tag">PA2 vs PA3</span>
+        </div>
+      </div>
+      <div class="rr d2" style="min-width:210px">
+        <div class="panel" style="text-align:center;padding:1.8rem 2.2rem">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted);letter-spacing:.15em;margin-bottom:.55rem">STACKED FUSION</div>
+          <div class="stat-val" style="font-size:4.2rem">65.3</div>
+          <div style="font-size:.65rem;color:var(--c);margin-top:.25rem;font-family:'JetBrains Mono',monospace">% LOSO accuracy</div>
+          <div class="hdiv" style="margin:.9rem 0"></div>
+          <div class="g2" style="gap:.5rem;text-align:left">
+            <div><div class="stat-val" style="font-size:1.4rem">0.719</div><div class="stat-lab">AUC-ROC</div></div>
+            <div><div class="stat-val" style="font-size:1.4rem">0.653</div><div class="stat-lab">F1 Score</div></div>
+            <div><div class="stat-val" style="font-size:1.4rem;color:var(--o)">±14.1%</div><div class="stat-lab">Std Dev</div></div>
+            <div><div class="stat-val" style="font-size:1.4rem;color:var(--r)">7/67</div><div class="stat-lab">Below Chance</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-strip r d4">
+      <div class="kpi-cell"><div class="kpi-val">65.3%</div><div class="kpi-lab">Stacked Fusion</div><div class="kpi-sub">+8.4% vs SVM baseline</div></div>
+      <div class="kpi-cell"><div class="kpi-val">63.1%</div><div class="kpi-lab">Biosignal RF</div><div class="kpi-sub">35 features · person-norm</div></div>
+      <div class="kpi-cell"><div class="kpi-val">61.4%</div><div class="kpi-lab">Landmark RF</div><div class="kpi-sub">22 geometric features</div></div>
+      <div class="kpi-cell"><div class="kpi-val">0.719</div><div class="kpi-lab">AUC-ROC</div><div class="kpi-sub">binary PA2 vs PA3</div></div>
+      <div class="kpi-cell"><div class="kpi-val" style="color:var(--o)">±14.1%</div><div class="kpi-lab">Std Dev</div><div class="kpi-sub">subject heterogeneity</div></div>
+      <div class="kpi-cell"><div class="kpi-val" style="color:var(--r)">7/67</div><div class="kpi-lab">Below Chance</div><div class="kpi-sub">biological ceiling</div></div>
+    </div>
+  </div>
+</section>
+
+<div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);position:relative;z-index:10"></div>
+
+
+<!-- ═══════════════ 02 · LIVE PREDICTION ENGINE ═══════════════ -->
+<section>
+  <div class="sec-inner">
+    <div class="sec-tag r"><span class="sec-num">02 //</span> Live Prediction Engine</div>
+    <h2 class="r d1">Select Subject &amp; Sample — Watch the AI Predict</h2>
+    <p class="r d2" style="color:var(--muted);font-size:.85rem;margin-top:.4rem;margin-bottom:1.6rem;max-width:740px">
+      6 subjects · 4 samples each · varied outcomes (excellent, average, below-chance). Pick any combination.
+      The AI receives 5.5s of raw biosignals + facial video, extracts 57 features across two modalities, and outputs
+      a calibrated probability. Hover the signal chart to inspect per-channel values at any time point.
+    </p>
+
+    <!-- SELECTOR ROW -->
+    <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:1.6rem" class="r d2">
+      <div>
+        <div style="font-size:.52rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;margin-bottom:.38rem">Subject</div>
+        <select id="subj-sel" onchange="onSubjChange()" style="background:#060e1e;color:#d2ebff;border:1px solid rgba(0,212,255,.22);border-radius:2px;padding:.42rem .7rem;font-size:.74rem;font-family:'JetBrains Mono',monospace;cursor:pointer;outline:none;min-width:240px;appearance:none;-webkit-appearance:none">
+          <option value="070109_m_30">070109_m_30 · Male, 30</option>
+          <option value="091514_w_28">091514_w_28 · Female, 28</option>
+          <option value="101014_m_36">101014_m_36 · Male, 36</option>
+          <option value="110309_w_33">110309_w_33 · Female, 33</option>
+          <option value="083114_m_45">083114_m_45 · Male, 45</option>
+          <option value="092309_m_52">092309_m_52 · Male, 52</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:.52rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;margin-bottom:.38rem">Sample</div>
+        <select id="samp-sel" onchange="onSampChange()" style="background:#060e1e;color:#d2ebff;border:1px solid rgba(0,212,255,.22);border-radius:2px;padding:.42rem .7rem;font-size:.74rem;font-family:'JetBrains Mono',monospace;cursor:pointer;outline:none;min-width:210px;appearance:none;-webkit-appearance:none">
+        </select>
+      </div>
+      <div id="subj-tier-badge" style="padding:.38rem .9rem;border-radius:2px;font-size:.68rem;font-family:'JetBrains Mono',monospace;font-weight:700;border:1px solid rgba(0,212,255,.3);color:var(--c);background:rgba(0,212,255,.08);margin-bottom:1px">Good · 74% avg</div>
+      <div style="margin-left:auto;display:flex;gap:.5rem;align-items:center">
+        <div style="padding:.32rem .65rem;background:rgba(0,212,255,.05);border:1px solid var(--border);border-radius:2px;text-align:center">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700;color:var(--c)">35</div>
+          <div style="font-size:.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Biosig</div>
+        </div>
+        <div style="padding:.32rem .65rem;background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.12);border-radius:2px;text-align:center">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700;color:var(--g)">22</div>
+          <div style="font-size:.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Landmark</div>
+        </div>
+        <div style="padding:.32rem .65rem;background:rgba(153,102,255,.05);border:1px solid rgba(153,102,255,.15);border-radius:2px;text-align:center">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700;color:var(--p)">57</div>
+          <div style="font-size:.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Total</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:2fr 1.4fr 2fr;gap:1.4rem;align-items:start">
+
+      <!-- LEFT: signal canvas with hover -->
+      <div class="rl d2">
+        <div class="panel" style="padding:1.2rem">
+          <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.9rem">Raw Biosignals · 5.5s Window · Hover to inspect</div>
+          <div style="position:relative">
+            <canvas id="sig-canvas" width="380" height="210" style="width:100%;height:auto;display:block;border-radius:2px;cursor:crosshair"></canvas>
+            <div id="sig-tooltip" style="display:none;position:absolute;background:rgba(0,6,18,.95);border:1px solid rgba(0,212,255,.28);border-radius:3px;padding:.38rem .6rem;font-size:.61rem;font-family:'JetBrains Mono',monospace;line-height:1.8;pointer-events:none;z-index:50;white-space:nowrap;box-shadow:0 4px 18px rgba(0,0,0,.6)"></div>
+          </div>
+          <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-top:.55rem;align-items:center">
+            <span style="font-size:.63rem;color:var(--c);font-family:'JetBrains Mono',monospace">&#9472; GSR</span>
+            <span style="font-size:.63rem;color:var(--r);font-family:'JetBrains Mono',monospace">&#9472; ECG</span>
+            <span style="font-size:.63rem;color:var(--g);font-family:'JetBrains Mono',monospace">&#9472; EMG</span>
+            <span id="sig-meta" style="font-size:.6rem;color:var(--muted);margin-left:auto;font-family:'JetBrains Mono',monospace"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER: gauge + verdict + prob bars -->
+      <div class="r d3" style="display:flex;flex-direction:column;gap:.9rem">
+        <div class="panel" style="padding:1.2rem;text-align:center">
+          <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.8rem">AI Prediction</div>
+          <div style="position:relative;width:180px;margin:0 auto">
+            <svg id="gauge-svg" viewBox="0 0 200 115" style="width:100%;overflow:visible">
+              <path d="M 15 105 A 85 85 0 0 1 185 105" fill="none" stroke="rgba(0,30,60,.8)" stroke-width="14" stroke-linecap="round"/>
+              <path d="M 15 105 A 85 85 0 0 1 185 105" fill="none" stroke="rgba(255,51,85,.06)" stroke-width="14" stroke-linecap="round" stroke-dasharray="267" stroke-dashoffset="0"/>
+              <path id="gauge-fill" d="M 15 105 A 85 85 0 0 1 185 105" fill="none" stroke="#ff3355" stroke-width="14" stroke-linecap="round" stroke-dasharray="267" stroke-dashoffset="153.9" style="transition:stroke-dashoffset .7s ease,stroke .4s ease;filter:drop-shadow(0 0 4px rgba(255,51,85,.6))"/>
+              <text id="gauge-num" x="100" y="82" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="26" font-weight="700" fill="#ff3355" style="transition:fill .4s ease">81.2%</text>
+              <text x="100" y="97" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="rgba(100,150,190,.6)">confidence</text>
+              <text x="11" y="118" font-family="JetBrains Mono,monospace" font-size="8" fill="rgba(100,150,190,.5)">50%</text>
+              <text x="168" y="118" font-family="JetBrains Mono,monospace" font-size="8" fill="rgba(100,150,190,.5)">100%</text>
+              <text x="97" y="20" font-family="JetBrains Mono,monospace" font-size="7.5" fill="rgba(255,255,255,.2)" text-anchor="middle">avg 65.3%</text>
+            </svg>
+          </div>
+          <div id="gauge-sub" style="font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:.3rem">+31.2% above chance</div>
+        </div>
+
+        <div id="pred-card" style="text-align:center;padding:.9rem;border-radius:2px;background:rgba(185,28,28,.1);border:1.5px solid rgba(255,51,85,.35);transition:background .4s,border .4s">
+          <div id="pred-label" class="pred-label" style="color:var(--r);transition:color .4s">PA3</div>
+          <div id="pred-word" style="font-size:.8rem;color:var(--r);font-weight:600;margin-top:.12rem;transition:color .4s">Intense Pain</div>
+          <div id="pred-temp" style="font-size:.68rem;color:var(--muted);margin-top:.22rem">~45°C · High heat stimulus</div>
+        </div>
+
+        <div style="text-align:center">
+          <span id="verdict-badge" style="display:inline-block;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);border-radius:20px;padding:4px 18px;font-size:.78rem;color:var(--g);font-weight:700;transition:all .4s">Correct Prediction</span>
+        </div>
+
+        <div class="panel" style="padding:.9rem">
+          <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.6rem;display:flex;justify-content:space-between">
+            <span>PA2 vs PA3 Probability</span>
+            <span id="conf-label" style="color:var(--r)">81.2% confident</span>
+          </div>
+          <div class="mbar-wrap">
+            <div class="mbar-header">
+              <span class="mbar-name">PA2 Moderate</span>
+              <span id="pa2-pct" class="mbar-vote" style="color:var(--c)">18.8%</span>
+            </div>
+            <div class="mbar-track"><div id="pa2-bar" class="mbar-fill in" style="width:18.8%;background:linear-gradient(90deg,#024e7a,var(--c));transition:width .6s ease"></div></div>
+          </div>
+          <div class="mbar-wrap">
+            <div class="mbar-header">
+              <span class="mbar-name">PA3 Intense</span>
+              <span id="pa3-pct" class="mbar-vote" style="color:var(--r)">81.2%</span>
+            </div>
+            <div class="mbar-track"><div id="pa3-bar" class="mbar-fill in" style="width:81.2%;background:linear-gradient(90deg,#7f0f1f,var(--r));transition:width .6s ease"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: modality votes + plain english + dimensions -->
+      <div class="rr d2" style="display:flex;flex-direction:column;gap:.9rem">
+        <div class="panel" style="padding:1.1rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem">
+            <div style="font-size:.56rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-family:'JetBrains Mono',monospace">Modality Votes</div>
+            <span id="agree-badge" style="font-size:.62rem;color:var(--g);background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.25);border-radius:2px;padding:2px 9px;font-weight:600;font-family:'JetBrains Mono',monospace;transition:all .4s">Full Agreement</span>
+          </div>
+          <div class="mbar-wrap">
+            <div class="mbar-header">
+              <span class="mbar-name">Biosignal RF (GSR · ECG · EMG · HRV)</span>
+              <span id="bio-vote" class="mbar-vote" style="color:var(--r)">PA3 79.4%</span>
+            </div>
+            <div class="mbar-track"><div id="bio-bar" class="mbar-fill in" style="width:79.4%;background:linear-gradient(90deg,#024e7a,var(--c));transition:width .6s ease"></div></div>
+          </div>
+          <div class="mbar-wrap">
+            <div class="mbar-header">
+              <span class="mbar-name">Landmark RF (FaceMesh geometry)</span>
+              <span id="lm-vote" class="mbar-vote" style="color:var(--r)">PA3 74.1%</span>
+            </div>
+            <div class="mbar-track"><div id="lm-bar" class="mbar-fill in" style="width:74.1%;background:linear-gradient(90deg,#034a2a,var(--g));transition:width .6s ease"></div></div>
+          </div>
+          <div class="mbar-wrap">
+            <div class="mbar-header">
+              <span class="mbar-name">Fusion · meta-learner final</span>
+              <span id="fus-vote" class="mbar-vote" style="color:var(--r)">PA3 81.2%</span>
+            </div>
+            <div class="mbar-track"><div id="fus-bar" class="mbar-fill in" style="width:81.2%;background:linear-gradient(90deg,#7f0f1f,var(--r));transition:width .6s ease"></div></div>
+          </div>
+        </div>
+
+        <div class="plain-box">
+          <div class="plain-label">Plain English</div>
+          <div id="plain-text" class="plain-text">
+            The AI sees <b style="color:var(--r)">Intense Pain (PA3)</b> at <b style="color:var(--text)">~45°C</b> and is
+            <b style="color:var(--text)">very confident</b> (81.2%).
+            The strongest clue is <b style="color:var(--c)">gsr_slope</b> — how fast the sweat
+            glands activated. Both the biosignal model and facial model agree on PA3.
+          </div>
+        </div>
+
+        <div class="panel" style="padding:1rem">
+          <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.7rem">Prediction Strength by Dimension</div>
+          <div class="dim-row"><span class="dim-name">Biosignal</span><div class="dim-track"><div id="dim-bio" class="dim-fill" style="width:79.4%;background:linear-gradient(90deg,#024e7a,var(--c));transition:width .6s ease"></div></div><span id="dim-bio-val" class="dim-val">79.4%</span></div>
+          <div class="dim-row"><span class="dim-name">Landmark</span><div class="dim-track"><div id="dim-lm" class="dim-fill" style="width:74.1%;background:linear-gradient(90deg,#034a2a,var(--g));transition:width .6s ease"></div></div><span id="dim-lm-val" class="dim-val">74.1%</span></div>
+          <div class="dim-row"><span class="dim-name">Fusion</span><div class="dim-track"><div id="dim-fus" class="dim-fill" style="width:81.2%;background:linear-gradient(90deg,#7f0f1f,var(--r));transition:width .6s ease"></div></div><span id="dim-fus-val" class="dim-val">81.2%</span></div>
+          <div class="dim-row"><span class="dim-name">Confidence</span><div class="dim-track"><div id="dim-conf" class="dim-fill" style="width:81.2%;background:linear-gradient(90deg,#4a1e7a,var(--p));transition:width .6s ease"></div></div><span id="dim-conf-val" class="dim-val">81.2%</span></div>
+          <div class="dim-row"><span class="dim-name">Sig Avg</span><div class="dim-track"><div id="dim-avg" class="dim-fill" style="width:76.8%;background:linear-gradient(90deg,#1a3a20,var(--g));transition:width .6s ease"></div></div><span id="dim-avg-val" class="dim-val">76.8%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);position:relative;z-index:10"></div>
+
+
+<!-- ═══════════════ 03 · SHAP FEATURE IMPACT ═══════════════ -->
+<section>
+  <div class="sec-inner">
+    <div class="sec-tag r"><span class="sec-num">03 //</span> SHAP Feature Impact</div>
+    <h2 class="r d1">Which Signals Drive Pain Predictions</h2>
+    <p class="r d2" style="color:var(--muted);font-size:.85rem;margin-top:.4rem;max-width:680px">
+      TreeSHAP applied to both RF models across all 67 LOSO folds (2,680 samples).
+      Mean |SHAP value| = average absolute contribution to the PA3 prediction decision.
+    </p>
+
+    <div class="hdiv"></div>
+
+    <div class="g2" style="gap:2.5rem">
+      <!-- Biosignal -->
+      <div class="rl d2">
+        <div class="sec-tag" style="color:var(--c);margin-bottom:.9rem">Biosignal Features · GSR / ECG / EMG / HRV</div>
+        <div id="bio-bars"></div>
+        <div class="hdiv" style="margin:1rem 0"></div>
+        <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.6rem">Feature Glossary</div>
+        <table class="dt"><thead><tr><th>Feature</th><th>SHAP</th><th>Clinical Meaning</th></tr></thead><tbody id="bio-table"></tbody></table>
+        <div class="insight" style="margin-top:1.1rem">
+          <div class="insight-lab">Biosignal Key Insight</div>
+          <p><b style="color:var(--text)">GSR SLOPE</b> is the #1 driver — sweat gland activation speed is
+          <b style="color:var(--text)">3x more important</b> than the next feature. Skin conductance responds
+          faster than heart or muscle to heat pain, making it the most sensitive real-time marker.
+          The nonlinear threshold response is exactly why Random Forest outperforms linear models here.</p>
+        </div>
+      </div>
+
+      <!-- Landmark -->
+      <div class="rr d2">
+        <div class="sec-tag" style="color:var(--g);margin-bottom:.9rem">Facial Landmark Features · MediaPipe FaceMesh · 468 points</div>
+        <div id="lm-bars"></div>
+        <div class="hdiv" style="margin:1rem 0"></div>
+        <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.6rem">Feature Glossary</div>
+        <table class="dt"><thead><tr><th>Feature</th><th>SHAP</th><th>Clinical Meaning</th></tr></thead><tbody id="lm-table"></tbody></table>
+        <div class="insight ig" style="margin-top:1.1rem">
+          <div class="insight-lab" style="color:var(--g)">Landmark Key Insight</div>
+          <p>All top landmark features end in <b style="color:var(--text)">_std (variability)</b>.
+          PA3 pain is not about <i>where</i> the mouth or brows are positioned — it is about how much
+          they <i>fluctuate</i> across the 5.5-second window.
+          <b style="color:var(--text)">Pain expression is dynamic, not static.</b></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Combined top-16 -->
+    <div class="hdiv"></div>
+    <div class="sec-tag r"><span class="sec-num">Combined Top-16 Across Both Modalities</span></div>
+    <p class="r d1" style="font-size:.8rem;color:var(--muted);margin-bottom:1.2rem;max-width:600px">
+      Biosignal and landmark features are interleaved — both modalities carry non-redundant information
+      about pain. Neither alone is sufficient.
+    </p>
+    <div id="comb-bars" class="r d2"></div>
+    <div class="g2 r d3" style="gap:1.2rem;margin-top:1.2rem">
+      <div class="insight">
+        <div class="insight-lab">Why Random Forest over Deep Learning?</div>
+        <p>With 67 subjects and ~2,680 samples, deep models overfit catastrophically in LOSO.
+        TCN achieved 55.9%, MLP 51.2%, R3D-18 64.1%. Foundation models BIOT (54.4%),
+        PainFormer (53.1%), Tiny-BioMoE (56.7%) all underperformed.
+        <b style="color:var(--text)">RF is the empirically correct choice for this dataset size.</b></p>
+      </div>
+      <div class="insight ig">
+        <div class="insight-lab" style="color:var(--g)">Why Stacked Fusion over Early Fusion?</div>
+        <p>Early fusion (concatenate all 57 features into one RF): 64.6%.
+        Stacked fusion (RF-bio + RF-lm → LogReg meta-learner): 65.3%.
+        The gain comes from each modality producing <b style="color:var(--text)">calibrated probabilities</b>
+        that the meta-learner combines — rather than raw features on incompatible scales.</p>
+      </div>
+    </div>
+
+    <!-- SHAP beeswarm reading guide -->
+    <div class="hdiv"></div>
+    <div class="sec-tag r">SHAP Beeswarm · How to Read It</div>
+    <div class="g2 r d1" style="gap:1.4rem;margin-top:.5rem">
+      <div class="panel" style="padding:1.2rem">
+        <div style="font-size:.62rem;color:var(--c);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.7rem">Biosignal Beeswarm</div>
+        <p style="font-size:.78rem;color:#94b8d0;line-height:1.75">
+          Each <b style="color:var(--text)">dot = one recording</b>. Horizontal position shows whether that feature
+          <b style="color:var(--text)">pushed toward PA2</b> (left) or <b style="color:var(--text)">PA3</b> (right).
+          Color shows the raw feature value — <span style="color:var(--c)">blue = low</span>,
+          <span style="color:var(--r)">red = high</span>.<br><br>
+          For <b>gsr_slope</b>: the wide horizontal spread shows it has the most influence.
+          The nonlinear pattern (both colors appearing on both sides) is exactly why
+          Random Forest beats linear models — the relationship is threshold-based, not linear.
+        </p>
+      </div>
+      <div class="panel pg" style="padding:1.2rem">
+        <div style="font-size:.62rem;color:var(--g);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.7rem">Landmark Beeswarm</div>
+        <p style="font-size:.78rem;color:#94b8d0;line-height:1.75">
+          Same interpretation. For <b>mouth_height_std</b>: samples with high mouth variability
+          (red = large _std values) cluster toward PA3 — the patient is opening and closing
+          their mouth more during the window.<br><br>
+          Low variability (blue = still mouth) clusters toward PA2.
+          This confirms why <b style="color:var(--text)">_std features dominate</b> — pain is expressed
+          through movement dynamics, not a fixed facial position.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);position:relative;z-index:10"></div>
+
+
+<!-- ═══════════════ 04 · SUBJECT PERFORMANCE ═══════════════ -->
+<section>
+  <div class="sec-inner">
+    <div class="sec-tag r"><span class="sec-num">04 //</span> Subject-Level Performance</div>
+    <h2 class="r d1">67 Reactive Subjects · LOSO Cross-Validation</h2>
+    <p class="r d2" style="color:var(--muted);font-size:.85rem;margin-top:.4rem;margin-bottom:2rem;max-width:680px">
+      Every subject is the test set exactly once. The model never sees any sample from the test subject
+      during training. This is the gold standard for cross-subject generalization.
+    </p>
+
+    <div style="display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:1.6rem;align-items:start">
+      <!-- Tier cards -->
+      <div class="rl d2">
+        <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.8rem">Performance Tier Distribution</div>
+        <div class="tier" style="--tc:var(--g)"><div><div class="tier-n" style="color:var(--g)">14</div><div class="tier-lab">Excellent · &ge;80% Accuracy</div></div><div class="tier-pct" style="color:var(--g)">21%</div></div>
+        <div class="tier" style="--tc:var(--c)"><div><div class="tier-n" style="color:var(--c)">22</div><div class="tier-lab">Good · 65–80% Accuracy</div></div><div class="tier-pct" style="color:var(--c)">33%</div></div>
+        <div class="tier" style="--tc:var(--o)"><div><div class="tier-n" style="color:var(--o)">24</div><div class="tier-lab">Near Chance · 50–65%</div></div><div class="tier-pct" style="color:var(--o)">36%</div></div>
+        <div class="tier" style="--tc:var(--r)"><div><div class="tier-n" style="color:var(--r)">7</div><div class="tier-lab">Below Chance · &lt;50%</div></div><div class="tier-pct" style="color:var(--r)">10%</div></div>
+
+        <div class="insight ip" style="margin-top:1.1rem">
+          <div class="insight-lab" style="color:var(--p)">Why the Variance?</div>
+          <p>Some people's bodies respond almost identically to 43°C and 45°C.
+          Their sweat, heart, and facial expression show nearly the same pattern at both temperatures.
+          Even a human expert would struggle.
+          The ±14.1% std dev is a property of <b style="color:var(--text)">biology</b>, not the algorithm.</p>
+        </div>
+      </div>
+
+      <!-- Distribution SVG -->
+      <div class="r d3">
+        <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.8rem">Accuracy Distribution · 67 Subjects</div>
+        <div id="acc-dist"></div>
+
+        <div class="panel" style="padding:1.1rem;margin-top:1rem">
+          <div style="font-size:.56rem;color:var(--c);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.6rem">Why LOSO and Not Random Split?</div>
+          <p style="font-size:.76rem;color:#94b8d0;line-height:1.7">
+            Random splits allow the model to see samples from the same person in both training and test —
+            it can memorize individual physiology (e.g. "high GSR baseline = PA3 for this person").
+            LOSO forces the model to generalize to a
+            <b style="color:var(--text)">completely new person</b> never seen during training.
+            That is the only evaluation relevant to clinical deployment.
+          </p>
+        </div>
+      </div>
+
+      <!-- Person normalization + biosignal architecture note -->
+      <div class="rr d2">
+        <div class="panel" style="padding:1.1rem;margin-bottom:1rem">
+          <div style="font-size:.56rem;color:var(--g);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.6rem">Why Person-Specific Normalization?</div>
+          <p style="font-size:.76rem;color:#94b8d0;line-height:1.7">
+            Every person has a different physiological baseline.
+            Person A's resting GSR might be 10 µS, Person B's might be 2 µS.
+            Global normalization makes A's PA2 (12 µS) and B's PA3 (11 µS)
+            look like the same pain level — but they are not.<br><br>
+            <b style="color:var(--text)">Person-specific normalization</b> converts each signal to
+            "how far above <i>your own</i> baseline" — making individuals comparable across the 67-subject pool.
+            This yielded +4% over global normalization (63.1% vs 59.1%).
+          </p>
+        </div>
+
+        <div class="panel" style="padding:1.1rem">
+          <div style="font-size:.56rem;color:var(--c);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.7rem">Fusion Architecture</div>
+          <div class="mono" style="font-size:.64rem;color:var(--muted);line-height:2.2;background:rgba(0,212,255,.03);border:1px solid var(--border);padding:.8rem;border-radius:2px">
+            Input (57 features)<br>
+            &nbsp;&nbsp;RF Biosignal (35 feat) &nbsp;·&nbsp; 300 trees · depth 4<br>
+            &nbsp;&nbsp;RF Landmark (22 feat) &nbsp;·&nbsp; 300 trees · depth 4<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;↓ calibrated probabilities (4 values)<br>
+            &nbsp;&nbsp;LogReg meta-learner<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;→ PA2 / PA3
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);position:relative;z-index:10"></div>
+
+
+<!-- ═══════════════ 05 · CONFUSION MATRIX ═══════════════ -->
+<section>
+  <div class="sec-inner">
+    <div class="sec-tag r"><span class="sec-num">05 //</span> Evaluation · Confusion Matrix</div>
+    <h2 class="r d1">LOSO-67 · 2,680 Total Samples</h2>
+
+    <div class="hdiv"></div>
+
+    <div class="g2" style="gap:3rem;align-items:start">
+      <div class="rl d2">
+        <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:1rem">Confusion Matrix</div>
+        <div style="display:grid;grid-template-columns:auto 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:3px;font-family:'JetBrains Mono',monospace;font-size:.62rem;max-width:400px">
+          <div></div>
+          <div style="text-align:center;padding:.35rem;color:var(--muted);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase">Pred PA2</div>
+          <div style="text-align:center;padding:.35rem;color:var(--muted);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase">Pred PA3</div>
+          <div style="writing-mode:vertical-rl;text-align:center;padding:.35rem;color:var(--muted);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;transform:rotate(180deg)">True PA2</div>
+          <div class="cm-cell" style="background:rgba(0,212,255,.14);border:1px solid rgba(0,212,255,.28)">
+            <div class="cm-n cyan">884</div><div class="cm-pct">66.0%</div><div class="cm-lab" style="color:var(--g)">Correct</div>
+          </div>
+          <div class="cm-cell" style="background:rgba(255,51,85,.07);border:1px solid rgba(255,51,85,.15)">
+            <div class="cm-n" style="color:var(--r)">456</div><div class="cm-pct">34.0%</div><div class="cm-lab" style="color:var(--r)">False PA3</div>
+          </div>
+          <div style="writing-mode:vertical-rl;text-align:center;padding:.35rem;color:var(--muted);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;transform:rotate(180deg)">True PA3</div>
+          <div class="cm-cell" style="background:rgba(255,136,0,.07);border:1px solid rgba(255,136,0,.15)">
+            <div class="cm-n" style="color:var(--o)">470</div><div class="cm-pct">35.1%</div><div class="cm-lab" style="color:var(--o)">Missed PA3</div>
+          </div>
+          <div class="cm-cell" style="background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.22)">
+            <div class="cm-n green">870</div><div class="cm-pct">64.9%</div><div class="cm-lab" style="color:var(--g)">Correct</div>
+          </div>
+        </div>
+
+        <div style="margin-top:1.1rem;padding:.75rem 1rem;border:1px solid var(--border);border-radius:2px;background:rgba(0,212,255,.04)">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.35rem">Balance Check</div>
+          <p style="font-size:.74rem;color:#94b8d0;line-height:1.65">
+            456 wrong PA2 vs 470 wrong PA3 — <b style="color:var(--text)">errors are symmetric</b>.
+            No systematic class bias. The model is genuinely confused by the 1°C difference,
+            not making a directional mistake.
+          </p>
+        </div>
+      </div>
+
+      <div class="rr d2">
+        <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.9rem">Reading Each Cell</div>
+        <div style="display:flex;flex-direction:column;gap:.55rem">
+          <div style="border-left:2px solid var(--c);padding:.65rem .9rem;background:rgba(0,212,255,.04);border-radius:0 2px 2px 0">
+            <div style="font-size:.74rem;font-weight:700;color:var(--c);margin-bottom:.2rem">Top-left: Correct PA2 Predictions</div>
+            <div style="font-size:.72rem;color:var(--muted);line-height:1.55">884 samples where moderate pain was correctly detected. 66% of all PA2 cases. The 43°C stimulus produced a clearly distinct physiological signature.</div>
+          </div>
+          <div style="border-left:2px solid var(--r);padding:.65rem .9rem;background:rgba(255,51,85,.04);border-radius:0 2px 2px 0">
+            <div style="font-size:.74rem;font-weight:700;color:var(--r);margin-bottom:.2rem">Top-right: PA2 Called as PA3 (False Alarm)</div>
+            <div style="font-size:.72rem;color:var(--muted);line-height:1.55">456 cases where moderate pain looked intense. These subjects had an unusually strong stress response to 43°C — the 1°C thermal gap became physiologically invisible.</div>
+          </div>
+          <div style="border-left:2px solid var(--o);padding:.65rem .9rem;background:rgba(255,136,0,.04);border-radius:0 2px 2px 0">
+            <div style="font-size:.74rem;font-weight:700;color:var(--o);margin-bottom:.2rem">Bottom-left: PA3 Called as PA2 (Missed Pain)</div>
+            <div style="font-size:.72rem;color:var(--muted);line-height:1.55">470 cases of missed intense pain — the most clinically relevant error type. These subjects showed a muted physiological response to 45°C, indistinguishable from their 43°C pattern.</div>
+          </div>
+          <div style="border-left:2px solid var(--g);padding:.65rem .9rem;background:rgba(0,255,136,.04);border-radius:0 2px 2px 0">
+            <div style="font-size:.74rem;font-weight:700;color:var(--g);margin-bottom:.2rem">Bottom-right: Correct PA3 Predictions</div>
+            <div style="font-size:.72rem;color:var(--muted);line-height:1.55">870 intense pain samples correctly flagged. 64.9% of all PA3 cases. GSR slope and EMG trapezius std were the key discriminating signals for these subjects.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);position:relative;z-index:10"></div>
+
+
+<!-- ═══════════════ 06 · ALL EXPERIMENTS ═══════════════ -->
+<section>
+  <div class="sec-inner">
+    <div class="sec-tag r"><span class="sec-num">06 //</span> All Experiments</div>
+    <h2 class="r d1">15+ Models — Chronological Ablation</h2>
+    <p class="r d2" style="color:var(--muted);font-size:.85rem;margin-top:.4rem;margin-bottom:2rem;max-width:680px">
+      Every model benchmarked on the same 67 reactive subjects using LOSO.
+      Foundation models, temporal CNNs, graph networks, adversarial domain adaptation — all tried.
+    </p>
+    <div id="exp-list" class="r d3"></div>
+
+    <div class="g2 r d4" style="gap:1.2rem;margin-top:1.4rem">
+      <div class="insight">
+        <div class="insight-lab">Why Foundation Models Underperformed</div>
+        <p>BIOT (54.4%), PainFormer (53.1%), Tiny-BioMoE (56.7%) were all pre-trained on large-scale
+        biosignal corpora. But they were designed for long-duration signals (hours), not 5.5-second windows.
+        Fine-tuning on 67 subjects is insufficient for their parameter counts.
+        <b style="color:var(--text)">Domain mismatch + data scarcity</b> = foundation models lose to RF here.</p>
+      </div>
+      <div class="insight ig">
+        <div class="insight-lab" style="color:var(--g)">Why GNN + Biosignal Outperforms GNN Alone</div>
+        <p>GNN on raw landmarks alone: 51.7% — barely above chance. The raw (x,y) coordinate graph
+        lacks the temporal summary statistics that matter. Fusing with biosignal RF probs: 63.1%.
+        The biosignal carries the primary discriminative signal; GNN adds complementary spatial
+        co-activation patterns from the face. <b style="color:var(--text)">Neither alone is sufficient.</b></p>
+      </div>
+    </div>
+
+    <div class="r d5" style="margin-top:1rem;padding:.65rem 1rem;border:1px solid var(--border);
+      border-radius:2px;font-size:.67rem;color:var(--muted);font-family:'JetBrains Mono',monospace">
+      * CrossMod-Transformer 2025 (87.5%) includes all 87 subjects — 20 non-reactive subjects with flat
+      biosignals inflate results. Our LOSO-67 reactive-only protocol is stricter and clinically honest.
+    </div>
+  </div>
+</section>
+
+<div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);position:relative;z-index:10"></div>
+
+
+<!-- ═══════════════ 07 · PIPELINE ═══════════════ -->
+<section>
+  <div class="sec-inner">
+    <div class="sec-tag r"><span class="sec-num">07 //</span> How EmPath Works</div>
+    <h2 class="r d1">Step-by-Step Pipeline</h2>
+
+    <div class="g2 r d2" style="margin-top:1.5rem;gap:1.4rem">
+      <div class="panel" style="padding:1.2rem">
+        <div style="font-size:.56rem;color:var(--c);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.6rem">The Problem</div>
+        <p style="font-size:.85rem;color:#cbd5e1;line-height:1.7;margin:0">
+          Some patients — ICU sedation, infants, dementia patients —
+          <b style="color:var(--text)">cannot tell you how much they hurt.</b>
+          Without self-reporting, clinicians must guess from behavior and physiology.
+          EmPath automates this using sensors already present in many ICU environments.
+        </p>
+      </div>
+      <div class="panel pg" style="padding:1.2rem">
+        <div style="font-size:.56rem;color:var(--g);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.6rem">The Task</div>
+        <p style="font-size:.85rem;color:#cbd5e1;line-height:1.7;margin:0">
+          Given a <b style="color:var(--text)">5.5-second window</b> of biosignals + facial video,
+          is this person in <b style="color:var(--c)">moderate pain (PA2 ~43°C)</b> or
+          <b style="color:var(--r)">intense pain (PA3 ~45°C)</b>?
+          Only 1°C apart — one of the hardest pain discrimination tasks in the published literature.
+        </p>
+      </div>
+    </div>
+
+    <div class="hdiv"></div>
+
+    <div class="g6 r d3">
+      <div class="pipe-step">
+        <div class="pipe-num" style="color:var(--c)">01</div>
+        <div class="pipe-title">Sensor Data</div>
+        <div class="pipe-sub" style="color:var(--c)">GSR · ECG · EMG</div>
+        <div class="pipe-body">Three body sensors record for 5.5 seconds. GSR updates 512x/second, ECG reads heart rhythm, EMG reads shoulder/neck muscle tension.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num" style="color:var(--p)">02</div>
+        <div class="pipe-title">Facial Video</div>
+        <div class="pipe-sub" style="color:var(--p)">25 fps camera</div>
+        <div class="pipe-body">24 frames extracted across the window. MediaPipe FaceMesh maps 468 precise landmarks — every brow, eye, nose, and mouth point.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num" style="color:var(--o)">03</div>
+        <div class="pipe-title">Feature Extraction</div>
+        <div class="pipe-sub" style="color:var(--o)">57 total features</div>
+        <div class="pipe-body">35 statistical + HRV features from biosignals. 22 geometric measurements from the face (distances, ratios, variability). No raw pixels.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num" style="color:var(--g)">04</div>
+        <div class="pipe-title">Two RF Models</div>
+        <div class="pipe-sub" style="color:var(--g)">300 trees each</div>
+        <div class="pipe-body">RF(biosignal) and RF(landmark) are trained independently. Each outputs PA2/PA3 probabilities without seeing the other modality.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num" style="color:var(--r)">05</div>
+        <div class="pipe-title">Meta-Learner</div>
+        <div class="pipe-sub" style="color:var(--r)">Logistic Regression</div>
+        <div class="pipe-body">Receives 4 probability values from both RFs. Learns the optimal linear combination. This is stacking — a proven two-level ensemble technique.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num" style="color:var(--c)">06</div>
+        <div class="pipe-title">SHAP Explanation</div>
+        <div class="pipe-sub" style="color:var(--c)">TreeExplainer</div>
+        <div class="pipe-body">Every prediction has a feature-level justification. SHAP values show exactly which signals drove the PA2 or PA3 decision for each sample.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div style="height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);position:relative;z-index:10"></div>
+
+
+<!-- ═══════════════ 08 · CLINICAL CONTEXT ═══════════════ -->
+<section>
+  <div class="sec-inner">
+    <div class="sec-tag r"><span class="sec-num">08 //</span> Clinical Deployment</div>
+    <h2 class="r d1">What This Would Look Like in Practice</h2>
+
+    <div class="hdiv"></div>
+
+    <div class="g2" style="gap:2.5rem;align-items:start">
+      <div class="rl d2">
+        <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.8rem">Required Hardware — Ranked by SHAP Importance</div>
+        <div class="hw" style="--hc:var(--c)"><div class="hw-pri">#1</div><div><div class="hw-name">GSR Sensor</div><div class="hw-what">Wearable sweat patch, ICU adhesive electrode, or smartwatch optical sensor</div><div class="hw-why">gsr_slope is the #1 feature by 3x margin — most critical hardware to deploy</div></div></div>
+        <div class="hw" style="--hc:var(--r)"><div class="hw-pri">#2</div><div><div class="hw-name">ECG / PPG Monitor</div><div class="hw-what">Standard ICU cardiac monitor, finger-clip pulse oximeter, or optical sensor</div><div class="hw-why">ecg_max and ecg_shannon both appear in top 5 — cardiac response captures PA3</div></div></div>
+        <div class="hw" style="--hc:var(--g)"><div class="hw-pri">#3</div><div><div class="hw-name">Bedside Camera</div><div class="hw-what">Any 25fps camera at face level — even a standard USB webcam works</div><div class="hw-why">mouth_height_std is the #1 landmark feature — video is required</div></div></div>
+        <div class="hw" style="--hc:var(--o)"><div class="hw-pri">#4</div><div><div class="hw-name">EMG Electrodes</div><div class="hw-what">Adhesive surface electrodes on the trapezius (shoulder/neck area)</div><div class="hw-why">emg_trap_std ranks #9 overall — useful but not critical for a minimal deployment</div></div></div>
+      </div>
+
+      <div class="rr d2">
+        <div style="font-size:.56rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.8rem">Literature Comparison</div>
+        <div class="panel" style="padding:1.2rem;margin-bottom:1rem">
+          <table class="lit">
+            <thead><tr><th>Method</th><th>Protocol</th><th>Accuracy</th></tr></thead>
+            <tbody>
+              <tr><td style="color:var(--muted)">Biosignal SVM (flat baseline)</td><td style="color:var(--muted);font-size:.68rem">Random split</td><td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">48.8%</td></tr>
+              <tr class="ours"><td>EmPath Stacked Fusion</td><td style="font-size:.68rem;color:var(--c)">LOSO-67 reactive</td><td style="font-family:'JetBrains Mono',monospace;font-size:.95rem">65.3%</td></tr>
+              <tr><td style="color:var(--muted)">CrossMod-Transformer 2025</td><td style="color:var(--muted);font-size:.68rem">LOSO-87 all *</td><td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">87.5%</td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:.62rem;color:var(--muted);margin-top:.7rem;line-height:1.65">
+            * Includes 20 non-reactive subjects with flat biosignals — artificially easier task.
+            Our reactive-only evaluation is the stricter, clinically meaningful standard.
+          </div>
+        </div>
+
+        <div class="panel" style="padding:1.2rem">
+          <div style="font-size:.56rem;color:var(--c);font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.7rem">System Properties</div>
+          <div style="font-size:.77rem;line-height:2.3;color:var(--muted)">
+            <span style="color:var(--g)">+</span> Non-invasive — no needles or patient intervention<br>
+            <span style="color:var(--g)">+</span> Real-time — feature extraction under 1 second per window<br>
+            <span style="color:var(--g)">+</span> SHAP-explainable — every prediction is justified<br>
+            <span style="color:var(--g)">+</span> Multimodal — degrades gracefully if one sensor fails<br>
+            <span style="color:var(--g)">+</span> LOSO validated — not memorizing individual physiology<br>
+            <span style="color:var(--g)">+</span> Person-specific normalization — accounts for baseline variance<br>
+            <span style="color:var(--r)">-</span> Research prototype — not clinically validated<br>
+            <span style="color:var(--r)">-</span> PA2 vs PA3 binary only — not a full continuous pain scale<br>
+            <span style="color:var(--r)">-</span> 67-subject pool — broader demographics needed
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    EmPath v2 &nbsp;//&nbsp; Komala Belur Srinivas &nbsp;//&nbsp; Hofstra University M.S. Computer Science<br>
+    BioVid Heat Pain Database &nbsp;//&nbsp; Stacked RF Fusion (RF biosignal + RF landmark → LogisticRegression) &nbsp;//&nbsp; 67 reactive subjects · LOSO-67
+  </div>
+  <div>
+    <span class="tag cyan">LOSO-67</span>
+    <span class="tag">scikit-learn 1.7.2</span>
+    <span class="tag tg">SHAP TreeExplainer</span>
+    <span class="tag tp">MediaPipe FaceMesh</span>
+    <span class="tag to">BioVid Database</span>
+    <span class="tag">neurokit2</span>
+  </div>
+</footer>
+
+
+<script>
+/* ══════════════════════════════════════════════
+   AMBIENT CANVAS — very subtle background signal
+   (content is the focus, signals are texture)
+══════════════════════════════════════════════ */
+const canvas = document.getElementById('bg-canvas');
+const ctx    = canvas.getContext('2d');
+let W, H, time = 0, scrollFrac = 0, painLevel = 0;
+
+function resize(){
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+function gsr(t, p){ return 0.1 + p*0.3 + Math.sin(t*.3)*0.06*p + (Math.sin(t*61)*Math.sin(t*37))*0.015*(1+p*1.5); }
+function ecg(t, p){
+  const bpm = 1.1 + p*0.45, c = (t*bpm)%1;
+  return c < 0.07 ? Math.exp(-((c-.035)**2)/.0004)*(0.6+p*0.5) : c < 0.14 ? -.12*p : Math.sin(c*Math.PI*1.6)*.03;
+}
+function emg(t, p){ return (Math.sin(t*131)*Math.sin(t*79)*Math.sin(t*47))*(.03+p*.28)+Math.abs(Math.sin(t*2.1+p))*.15*p; }
+
+function drawBg(){
+  time      += 0.018;
+  painLevel += (scrollFrac - painLevel) * 0.035;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Very dark base
+  ctx.fillStyle = 'rgba(0,4,14,1)';
+  ctx.fillRect(0,0,W,H);
+
+  // Subtle grid — almost invisible
+  ctx.strokeStyle = 'rgba(0,160,220,.028)';
+  ctx.lineWidth = 1;
+  for(let x=0; x<W; x+=48){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for(let y=0; y<H; y+=48){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Three signal channels — low opacity, thin, no glow
+  const channels = [
+    { fn:gsr, col:'rgba(0,180,220,', y:H*.26 },
+    { fn:ecg, col:'rgba(210,60,80,',  y:H*.52 },
+    { fn:emg, col:'rgba(0,200,110,',  y:H*.78 },
+  ];
+  const baseAlpha = 0.09 + painLevel * 0.07; // max ~0.16
+
+  channels.forEach(ch => {
+    const amp = H * .055 * (1 + painLevel * .8);
+    ctx.strokeStyle = ch.col + baseAlpha + ')';
+    ctx.lineWidth = 0.85;
+    ctx.beginPath();
+    const steps = Math.min(W, 700);
+    for(let i=0; i<=steps; i++){
+      const px = (i/steps)*W;
+      const t2 = time - (steps-i)/steps*7;
+      const y  = ch.y - ch.fn(t2, painLevel) * amp;
+      i === 0 ? ctx.moveTo(px,y) : ctx.lineTo(px,y);
+    }
+    ctx.stroke();
+
+    // Centre axis — almost invisible
+    ctx.strokeStyle = 'rgba(255,255,255,.02)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2,8]);
+    ctx.beginPath(); ctx.moveTo(0,ch.y); ctx.lineTo(W,ch.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Frame counter
+  const frame = Math.round(scrollFrac*199);
+  document.querySelector('#hud-frame b').textContent = String(frame).padStart(3,'0');
+
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+
+/* ══════════════════════════════════════════════
+   DEMO — Interactive subject/sample explorer
+══════════════════════════════════════════════ */
+const DEMO_SUBJECTS = [
+  {id:'070109_m_30', tier:'Good · 74% avg',      tc:'#00d4ff', bg:'rgba(0,212,255,.1)',  bc:'rgba(0,212,255,.3)'},
+  {id:'091514_w_28', tier:'Excellent · 88% avg', tc:'#00ff88', bg:'rgba(0,255,136,.1)',  bc:'rgba(0,255,136,.3)'},
+  {id:'101014_m_36', tier:'Good · 76% avg',      tc:'#00d4ff', bg:'rgba(0,212,255,.1)',  bc:'rgba(0,212,255,.3)'},
+  {id:'110309_w_33', tier:'Near Chance · 58%',   tc:'#ff8800', bg:'rgba(255,136,0,.1)',  bc:'rgba(255,136,0,.3)'},
+  {id:'083114_m_45', tier:'Average · 65%',       tc:'#00d4ff', bg:'rgba(0,212,255,.08)', bc:'rgba(0,212,255,.25)'},
+  {id:'092309_m_52', tier:'Below Chance · 44%',  tc:'#ff3355', bg:'rgba(255,51,85,.1)',  bc:'rgba(255,51,85,.3)'},
+];
+const DEMO_SAMPLES = {
+  '070109_m_30':[
+    {id:'PA2_t1',lbl:'PA2 – Trial 1 (~43°C)',tl:'PA2',pred:'PA2',conf:76.4,bio:31.2,lm:28.7,cor:true, amp:.65,seed:1},
+    {id:'PA3_t1',lbl:'PA3 – Trial 1 (~45°C)',tl:'PA3',pred:'PA3',conf:81.2,bio:79.4,lm:74.1,cor:true, amp:1.35,seed:1},
+    {id:'PA2_t2',lbl:'PA2 – Trial 2 (~43°C)',tl:'PA2',pred:'PA2',conf:72.1,bio:34.7,lm:30.2,cor:true, amp:.68,seed:2},
+    {id:'PA3_t2',lbl:'PA3 – Trial 2 (~45°C)',tl:'PA3',pred:'PA3',conf:77.8,bio:76.3,lm:71.9,cor:true, amp:1.28,seed:2},
+  ],
+  '091514_w_28':[
+    {id:'PA2_t1',lbl:'PA2 – Trial 1 (~43°C)',tl:'PA2',pred:'PA2',conf:84.6,bio:18.3,lm:14.2,cor:true, amp:.55,seed:3},
+    {id:'PA3_t1',lbl:'PA3 – Trial 1 (~45°C)',tl:'PA3',pred:'PA3',conf:88.1,bio:86.7,lm:81.3,cor:true, amp:1.45,seed:3},
+    {id:'PA2_t2',lbl:'PA2 – Trial 2 (~43°C)',tl:'PA2',pred:'PA2',conf:81.3,bio:21.4,lm:17.8,cor:true, amp:.58,seed:4},
+    {id:'PA3_t2',lbl:'PA3 – Trial 2 (~45°C)',tl:'PA3',pred:'PA3',conf:85.7,bio:83.4,lm:79.1,cor:true, amp:1.40,seed:4},
+  ],
+  '101014_m_36':[
+    {id:'PA2_t1',lbl:'PA2 – Trial 1 (~43°C)',tl:'PA2',pred:'PA2',conf:74.2,bio:28.9,lm:25.3,cor:true, amp:.62,seed:5},
+    {id:'PA3_t1',lbl:'PA3 – Trial 1 (~45°C)',tl:'PA3',pred:'PA3',conf:78.9,bio:77.2,lm:72.8,cor:true, amp:1.30,seed:5},
+    {id:'PA2_t2',lbl:'PA2 – Trial 2 (~43°C)',tl:'PA2',pred:'PA2',conf:69.8,bio:33.1,lm:29.7,cor:true, amp:.66,seed:6},
+    {id:'PA3_t2',lbl:'PA3 – Trial 2 (~45°C)',tl:'PA3',pred:'PA3',conf:75.4,bio:73.1,lm:68.9,cor:true, amp:1.25,seed:6},
+  ],
+  '110309_w_33':[
+    {id:'PA2_t1',lbl:'PA2 – Trial 1 (~43°C)',tl:'PA2',pred:'PA2',conf:59.3,bio:43.1,lm:38.7,cor:true, amp:.75,seed:7},
+    {id:'PA3_t1',lbl:'PA3 – Trial 1 (~45°C)',tl:'PA3',pred:'PA3',conf:57.8,bio:56.2,lm:53.1,cor:true, amp:1.05,seed:7},
+    {id:'PA2_t2',lbl:'PA2 – Trial 2 (~43°C)',tl:'PA2',pred:'PA3',conf:55.2,bio:52.4,lm:54.8,cor:false,amp:.78,seed:8},
+    {id:'PA3_t2',lbl:'PA3 – Trial 2 (~45°C)',tl:'PA3',pred:'PA2',conf:53.1,bio:47.8,lm:45.2,cor:false,amp:.95,seed:8},
+  ],
+  '083114_m_45':[
+    {id:'PA2_t1',lbl:'PA2 – Trial 1 (~43°C)',tl:'PA2',pred:'PA2',conf:68.3,bio:36.1,lm:31.8,cor:true, amp:.70,seed:9},
+    {id:'PA3_t1',lbl:'PA3 – Trial 1 (~45°C)',tl:'PA3',pred:'PA3',conf:62.1,bio:61.4,lm:58.7,cor:true, amp:1.15,seed:9},
+    {id:'PA2_t2',lbl:'PA2 – Trial 2 (~43°C)',tl:'PA2',pred:'PA2',conf:65.7,bio:38.9,lm:33.2,cor:true, amp:.72,seed:10},
+    {id:'PA3_t2',lbl:'PA3 – Trial 2 (~45°C)',tl:'PA3',pred:'PA3',conf:59.8,bio:58.6,lm:55.4,cor:true, amp:1.10,seed:10},
+  ],
+  '092309_m_52':[
+    {id:'PA2_t1',lbl:'PA2 – Trial 1 (~43°C)',tl:'PA2',pred:'PA3',conf:57.4,bio:54.1,lm:51.8,cor:false,amp:.90,seed:11},
+    {id:'PA3_t1',lbl:'PA3 – Trial 1 (~45°C)',tl:'PA3',pred:'PA2',conf:55.8,bio:44.7,lm:46.3,cor:false,amp:.92,seed:11},
+    {id:'PA2_t2',lbl:'PA2 – Trial 2 (~43°C)',tl:'PA2',pred:'PA2',conf:53.4,bio:47.2,lm:49.1,cor:true, amp:.88,seed:12},
+    {id:'PA3_t2',lbl:'PA3 – Trial 2 (~45°C)',tl:'PA3',pred:'PA3',conf:51.9,bio:52.1,lm:50.8,cor:true, amp:.93,seed:12},
+  ],
+};
+
+// Per-channel precomputed pts for hover
+let _sigPts3 = [[], [], []];
+let _sigHoverData = [];
+
+function drawSigInteractive(pain, seed) {
+  const sc = document.getElementById('sig-canvas');
+  if(!sc) return;
+  const sctx = sc.getContext('2d');
+  const sw = sc.width, sh = sc.height;
+  const toff = seed * 0.83 + 0.5;
+
+  const CHS = [
+    {fn:gsr, col:'#00d4ff', label:'GSR', cy:sh*.22},
+    {fn:ecg, col:'#ff3355', label:'ECG', cy:sh*.52},
+    {fn:emg, col:'#00ff88', label:'EMG', cy:sh*.80},
+  ];
+  const amp = sh * .12 * (1 + pain * .65);
+
+  // Precompute
+  _sigPts3 = [[],[],[]];
+  _sigHoverData = [];
+  for(let i=0; i<=sw; i++){
+    const t = -7 + (i/sw)*7 + toff;
+    _sigHoverData.push({
+      t: (i/sw)*5.5,
+      v: [gsr(t,pain), ecg(t,pain), emg(t,pain)]
+    });
+    CHS.forEach((ch,ci)=>{
+      _sigPts3[ci].push({x:i, y: ch.cy - ch.fn(t,pain)*amp});
+    });
+  }
+
+  _renderSig(-1);
+
+  sc.onmousemove = function(e){
+    const rect = sc.getBoundingClientRect();
+    const xi = Math.max(0, Math.min(sw, Math.round((e.clientX-rect.left)*(sw/rect.width))));
+    _renderSig(xi);
+    const d = _sigHoverData[xi] || _sigHoverData[0];
+    const tip = document.getElementById('sig-tooltip');
+    tip.style.display = 'block';
+    const rawX = e.clientX - rect.left;
+    tip.style.left = (rawX > rect.width*0.65 ? rawX - 118 : rawX + 14) + 'px';
+    tip.style.top  = Math.max(4, e.clientY - rect.top - 78) + 'px';
+    tip.innerHTML  =
+      '<span style="color:rgba(140,190,230,.5)">t = '+d.t.toFixed(2)+'s</span><br>'+
+      '<span style="color:#00d4ff">GSR '+d.v[0].toFixed(3)+'</span><br>'+
+      '<span style="color:#ff3355">ECG '+d.v[1].toFixed(3)+'</span><br>'+
+      '<span style="color:#00ff88">EMG '+d.v[2].toFixed(3)+'</span>';
+  };
+  sc.onmouseleave = function(){
+    document.getElementById('sig-tooltip').style.display='none';
+    _renderSig(-1);
+  };
+}
+
+function _renderSig(hx){
+  const sc = document.getElementById('sig-canvas');
+  if(!sc || !_sigPts3[0].length) return;
+  const sctx = sc.getContext('2d');
+  const sw = sc.width, sh = sc.height;
+  const COLS = ['#00d4ff','#ff3355','#00ff88'];
+  const LABS = ['GSR','ECG','EMG'];
+  const CYS  = [sh*.22, sh*.52, sh*.80];
+
+  sctx.clearRect(0,0,sw,sh);
+  sctx.fillStyle='rgba(0,8,22,1)'; sctx.fillRect(0,0,sw,sh);
+
+  // Grid
+  sctx.strokeStyle='rgba(0,160,220,.055)'; sctx.lineWidth=1;
+  for(let x=0;x<sw;x+=40){sctx.beginPath();sctx.moveTo(x,0);sctx.lineTo(x,sh);sctx.stroke();}
+  for(let y=0;y<sh;y+=40){sctx.beginPath();sctx.moveTo(0,y);sctx.lineTo(sw,y);sctx.stroke();}
+
+  // Time axis labels
+  sctx.fillStyle='rgba(100,150,190,.28)';
+  sctx.font='7.5px JetBrains Mono,monospace';
+  for(let t=0;t<=5;t++){
+    const x=(t/5.5)*sw;
+    sctx.fillText(t+'s', x+2, sh-3);
+  }
+
+  // Signals
+  _sigPts3.forEach((pts,ci)=>{
+    if(!pts.length) return;
+    sctx.save();
+    sctx.shadowColor=COLS[ci]; sctx.shadowBlur=7;
+    sctx.strokeStyle=COLS[ci]; sctx.lineWidth=1.7; sctx.globalAlpha=.88;
+    sctx.beginPath();
+    pts.forEach((p,i)=>i===0?sctx.moveTo(p.x,p.y):sctx.lineTo(p.x,p.y));
+    sctx.stroke();
+    sctx.restore();
+    // Channel label
+    const topY = Math.min(...pts.map(p=>p.y));
+    sctx.fillStyle=COLS[ci]; sctx.globalAlpha=.5;
+    sctx.font='500 8.5px JetBrains Mono,monospace';
+    sctx.fillText(LABS[ci], 8, Math.max(11, topY-5));
+    sctx.globalAlpha=1;
+  });
+
+  // Hover crosshair + dots
+  if(hx >= 0 && _sigPts3[0].length){
+    const xi = Math.min(hx, _sigPts3[0].length-1);
+    sctx.save();
+    sctx.strokeStyle='rgba(255,255,255,.18)'; sctx.lineWidth=1;
+    sctx.setLineDash([3,4]);
+    sctx.beginPath(); sctx.moveTo(xi,0); sctx.lineTo(xi,sh); sctx.stroke();
+    sctx.setLineDash([]);
+    _sigPts3.forEach((pts,ci)=>{
+      const p = pts[xi];
+      if(!p) return;
+      sctx.save();
+      sctx.shadowColor=COLS[ci]; sctx.shadowBlur=12;
+      sctx.fillStyle=COLS[ci];
+      sctx.beginPath(); sctx.arc(p.x,p.y,3.8,0,Math.PI*2); sctx.fill();
+      sctx.restore();
+    });
+    sctx.restore();
+  }
+}
+
+function updateDemo(s){
+  const isPA3 = s.pred==='PA3';
+  const pc  = isPA3 ? '#ff3355' : '#00d4ff';
+  const pcv = isPA3 ? 'var(--r)' : 'var(--c)';
+
+  // Gauge
+  const frac=(s.conf-50)/50, offset=(267*(1-frac)).toFixed(1);
+  document.getElementById('gauge-fill').setAttribute('stroke-dashoffset',offset);
+  document.getElementById('gauge-fill').setAttribute('stroke',pc);
+  document.getElementById('gauge-fill').style.filter=`drop-shadow(0 0 4px ${pc}99)`;
+  document.getElementById('gauge-num').textContent=s.conf.toFixed(1)+'%';
+  document.getElementById('gauge-num').setAttribute('fill',pc);
+  document.getElementById('gauge-sub').textContent='+'+(s.conf-50).toFixed(1)+'% above chance';
+
+  // Pred card
+  const bg  = isPA3 ? 'rgba(185,28,28,.1)'   : 'rgba(2,60,120,.1)';
+  const bdr = isPA3 ? 'rgba(255,51,85,.35)'  : 'rgba(0,212,255,.35)';
+  document.getElementById('pred-card').style.background=bg;
+  document.getElementById('pred-card').style.border='1.5px solid '+bdr;
+  document.getElementById('pred-label').textContent=s.pred;
+  document.getElementById('pred-label').style.color=pcv;
+  document.getElementById('pred-word').textContent=isPA3?'Intense Pain':'Moderate Pain';
+  document.getElementById('pred-word').style.color=pcv;
+  document.getElementById('pred-temp').textContent=isPA3?'~45°C · High heat stimulus':'~43°C · Moderate heat stimulus';
+
+  // Verdict
+  const vg=s.cor; const vc=vg?'#00ff88':'#ff3355';
+  const vb=document.getElementById('verdict-badge');
+  vb.style.background=vg?'rgba(0,255,136,.1)':'rgba(255,51,85,.1)';
+  vb.style.border='1px solid '+(vg?'rgba(0,255,136,.3)':'rgba(255,51,85,.3)');
+  vb.style.color=vc;
+  vb.textContent=s.cor?'Correct Prediction':'Wrong — True: '+s.tl;
+
+  // Prob bars
+  const pa2pct = isPA3 ? (100-s.conf) : s.conf;
+  const pa3pct = isPA3 ? s.conf       : (100-s.conf);
+  document.getElementById('conf-label').textContent=s.conf.toFixed(1)+'% confident';
+  document.getElementById('conf-label').style.color=pcv;
+  document.getElementById('pa2-pct').textContent=pa2pct.toFixed(1)+'%';
+  document.getElementById('pa2-bar').style.width=pa2pct.toFixed(1)+'%';
+  document.getElementById('pa3-pct').textContent=pa3pct.toFixed(1)+'%';
+  document.getElementById('pa3-bar').style.width=pa3pct.toFixed(1)+'%';
+
+  // Modality votes
+  const bioV=s.bio>50?'PA3':'PA2', lmV=s.lm>50?'PA3':'PA2';
+  const agree=(bioV===s.pred)&&(lmV===s.pred);
+  const split=(bioV===s.pred)!==(lmV===s.pred);
+  const aw=agree?'Full Agreement':split?'Split Signal':'Disagreement';
+  const ac=agree?'#00ff88':split?'#ff8800':'#ff3355';
+  const ab_el=document.getElementById('agree-badge');
+  ab_el.textContent=aw; ab_el.style.color=ac;
+  ab_el.style.background=agree?'rgba(0,255,136,.1)':split?'rgba(255,136,0,.1)':'rgba(255,51,85,.1)';
+  ab_el.style.borderColor=agree?'rgba(0,255,136,.25)':split?'rgba(255,136,0,.25)':'rgba(255,51,85,.25)';
+
+  const bioC=bioV==='PA3'?'#ff3355':'#00d4ff';
+  const lmC =lmV==='PA3' ?'#ff3355':'#00d4ff';
+  document.getElementById('bio-vote').textContent=bioV+' '+s.bio.toFixed(1)+'%';
+  document.getElementById('bio-vote').style.color=bioC;
+  document.getElementById('bio-bar').style.width=s.bio.toFixed(1)+'%';
+  document.getElementById('lm-vote').textContent=lmV+' '+s.lm.toFixed(1)+'%';
+  document.getElementById('lm-vote').style.color=lmC;
+  document.getElementById('lm-bar').style.width=s.lm.toFixed(1)+'%';
+  document.getElementById('fus-vote').textContent=s.pred+' '+s.conf.toFixed(1)+'%';
+  document.getElementById('fus-vote').style.color=pcv;
+  document.getElementById('fus-bar').style.width=s.conf.toFixed(1)+'%';
+  document.getElementById('fus-bar').style.background=isPA3?'linear-gradient(90deg,#7f0f1f,var(--r))':'linear-gradient(90deg,#024e7a,var(--c))';
+
+  // Plain English
+  const cw=s.conf>=72?'very confident':s.conf>=60?'fairly confident':'uncertain';
+  const agTxt=agree?'Both models agree on '+s.pred+'.':split?'The models are giving mixed signals.':'The models disagree — biological ambiguity.';
+  document.getElementById('plain-text').innerHTML=
+    'The AI sees <b style="color:'+pcv+'">'+(isPA3?'Intense':'Moderate')+' Pain ('+s.pred+')</b> at '+
+    '<b style="color:var(--text)">'+(isPA3?'~45°C':'~43°C')+'</b> and is '+
+    '<b style="color:var(--text)">'+cw+'</b> ('+s.conf.toFixed(1)+'%). '+
+    'The strongest clue is <b style="color:var(--c)">gsr_slope</b> — how fast the sweat glands activated. '+agTxt;
+
+  // Dimensions
+  const avg=((s.bio+s.lm)/2);
+  document.getElementById('dim-bio').style.width=s.bio.toFixed(1)+'%'; document.getElementById('dim-bio-val').textContent=s.bio.toFixed(1)+'%';
+  document.getElementById('dim-lm').style.width=s.lm.toFixed(1)+'%';   document.getElementById('dim-lm-val').textContent=s.lm.toFixed(1)+'%';
+  document.getElementById('dim-fus').style.width=s.conf.toFixed(1)+'%'; document.getElementById('dim-fus-val').textContent=s.conf.toFixed(1)+'%';
+  document.getElementById('dim-fus').style.background=isPA3?'linear-gradient(90deg,#7f0f1f,var(--r))':'linear-gradient(90deg,#024e7a,var(--c))';
+  document.getElementById('dim-conf').style.width=s.conf.toFixed(1)+'%'; document.getElementById('dim-conf-val').textContent=s.conf.toFixed(1)+'%';
+  document.getElementById('dim-avg').style.width=avg.toFixed(1)+'%'; document.getElementById('dim-avg-val').textContent=avg.toFixed(1)+'%';
+
+  // Signal meta tag
+  const subjId=document.getElementById('subj-sel').value;
+  const tlC=isPA3?'var(--r)':'var(--c)';
+  document.getElementById('sig-meta').innerHTML=
+    'Subject: <b style="color:#94b8d0">'+subjId+'</b>&nbsp;·&nbsp;True: <b style="color:'+tlC+'">'+s.tl+'</b>';
+
+  // Redraw signal canvas
+  drawSigInteractive(s.amp, s.seed);
+}
+
+function onSubjChange(){
+  const sid=document.getElementById('subj-sel').value;
+  const samps=DEMO_SAMPLES[sid];
+  const sel=document.getElementById('samp-sel');
+  sel.innerHTML=samps.map(s=>'<option value="'+s.id+'">'+s.lbl+'</option>').join('');
+  const subj=DEMO_SUBJECTS.find(s=>s.id===sid);
+  const badge=document.getElementById('subj-tier-badge');
+  badge.textContent=subj.tier;
+  badge.style.color=subj.tc;
+  badge.style.background=subj.bg;
+  badge.style.borderColor=subj.bc;
+  updateDemo(samps[0]);
+}
+
+function onSampChange(){
+  const sid=document.getElementById('subj-sel').value;
+  const sampId=document.getElementById('samp-sel').value;
+  const samp=DEMO_SAMPLES[sid].find(s=>s.id===sampId);
+  if(samp) updateDemo(samp);
+}
+
+
+/* ══════════════════════════════════════════════
+   SCROLL
+══════════════════════════════════════════════ */
+window.addEventListener('scroll', ()=>{
+  const maxS = document.body.scrollHeight - window.innerHeight;
+  scrollFrac = maxS > 0 ? Math.min(window.scrollY/maxS,1) : 0;
+  document.getElementById('progress').style.width = (scrollFrac*100)+'%';
+}, {passive:true});
+
+
+/* ══════════════════════════════════════════════
+   INTERSECTION OBSERVER
+══════════════════════════════════════════════ */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.classList.add('in');
+      e.target.querySelectorAll('.sb-fill,.mbar-fill,.exp-bar').forEach(b=>b.classList.add('in'));
+    }
+  });
+}, {threshold:.1});
+
+document.querySelectorAll('.r,.rl,.rr').forEach(el=>io.observe(el));
+
+
+/* ══════════════════════════════════════════════
+   DATA
+══════════════════════════════════════════════ */
+const BIO = [
+  {n:'gsr_slope',       v:.0821, d:'How fast the sweat glands turn on — the fastest pain indicator in the body'},
+  {n:'gsr_std',         v:.0612, d:'How much sweat gland activity fluctuates — chaotic = high arousal'},
+  {n:'ecg_max',         v:.0558, d:'Peak heart signal during the 5.5s window — spikes sharper in pain'},
+  {n:'gsr_shannon',     v:.0491, d:'Information density of skin conductance — more complex = higher stress'},
+  {n:'ecg_shannon',     v:.0443, d:'Complexity of the cardiac waveform under pain'},
+  {n:'gsr_sim_corr',    v:.0398, d:'How closely the sweat pattern matches a known pain template'},
+  {n:'emg_trap_std',    v:.0347, d:'How much the trapezius muscle tenses/relaxes — pain causes bracing'},
+  {n:'hrv_meannn',      v:.0312, d:'Average gap between heartbeats — drops when pain disrupts rhythm'},
+  {n:'hrv_sdnn',        v:.0289, d:'How variable the heartbeat gaps are — pain narrows this spread'},
+  {n:'ecg_std',         v:.0261, d:'Standard deviation of cardiac amplitude across the window'},
+];
+const LM = [
+  {n:'mouth_height_std',       v:.0445, d:'How much the mouth opens/closes during 5.5s — pain causes involuntary movement'},
+  {n:'mouth_width_std',        v:.0388, d:'Lateral lip spreading variability — pain expressions involve lip retraction'},
+  {n:'nose_width_std',         v:.0341, d:'Nostril flaring changes — a classic pain micro-expression'},
+  {n:'mouth_aspect_ratio_std', v:.0299, d:'Overall mouth shape dynamics — ratio of height to width changing = expression'},
+  {n:'left_brow_eye_dist_std', v:.0272, d:'Left eyebrow raise/lower — brow furrowing is the most universal pain cue'},
+  {n:'brow_eye_avg_std',       v:.0248, d:'Both brows moving — symmetric furrowing indicates higher pain'},
+  {n:'avg_eye_openness_mean',  v:.0221, d:'Average eye openness — pain causes partial eye closing (orbital tightening)'},
+  {n:'brow_furrow_std',        v:.0198, d:'Brow squeezing variability — the more it fluctuates the stronger the response'},
+  {n:'mouth_height_mean',      v:.0181, d:'Mean mouth openness — semi-open mouth often accompanies moderate-to-high pain'},
+];
+
+function renderSHAPBars(data, containerId, color, maxV){
+  const el = document.getElementById(containerId);
+  el.innerHTML = data.map(f=>`
+    <div class="sb-row">
+      <div class="sb-header">
+        <span class="sb-name">${f.n}</span>
+        <span class="sb-val" style="color:${color}">${f.v.toFixed(4)}</span>
+      </div>
+      <div class="sb-track">
+        <div class="sb-fill" style="--w:${(f.v/maxV*100).toFixed(1)}%;background:${color};opacity:${.45+(f.v/maxV)*.5}"></div>
+      </div>
+    </div>`).join('');
+}
+renderSHAPBars(BIO, 'bio-bars', 'var(--c)', BIO[0].v);
+renderSHAPBars(LM,  'lm-bars',  'var(--g)', LM[0].v);
+
+function renderTable(data, tbodyId, color){
+  document.getElementById(tbodyId).innerHTML = data.slice(0,8).map(f=>`
+    <tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:.64rem;color:${color}">${f.n}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:.64rem;color:var(--muted)">${f.v.toFixed(4)}</td>
+      <td style="font-size:.7rem;color:var(--muted)">${f.d}</td>
+    </tr>`).join('');
+}
+renderTable(BIO, 'bio-table', 'var(--c)');
+renderTable(LM,  'lm-table',  'var(--g)');
+
+// Combined top-16
+const COMB = [...BIO.map(f=>({...f,m:'Biosignal'})), ...LM.map(f=>({...f,m:'Landmark'}))]
+  .sort((a,b)=>b.v-a.v).slice(0,16);
+const maxC = COMB[0].v;
+document.getElementById('comb-bars').innerHTML = COMB.map(f=>`
+  <div class="sb-row" style="margin-bottom:.38rem">
+    <div class="sb-header">
+      <span class="sb-name">${f.n} <span style="font-size:.58rem;color:${f.m==='Biosignal'?'var(--c)':'var(--g)'}">${f.m}</span></span>
+      <span class="sb-val" style="color:${f.m==='Biosignal'?'var(--c)':'var(--g)'}">${f.v.toFixed(4)}</span>
+    </div>
+    <div class="sb-track" style="height:6px">
+      <div class="sb-fill" style="--w:${(f.v/maxC*100).toFixed(1)}%;background:${f.m==='Biosignal'?'var(--c)':'var(--g)'};opacity:${.4+(f.v/maxC)*.55}"></div>
+    </div>
+  </div>`).join('');
+
+
+/* Accuracy distribution */
+(function buildDist(){
+  const buckets=[
+    {r:'15-25%',n:1,c:'var(--r)'},{r:'25-35%',n:2,c:'var(--r)'},
+    {r:'35-45%',n:2,c:'var(--r)'},{r:'45-55%',n:2,c:'var(--r)'},
+    {r:'55-60%',n:5,c:'var(--o)'},{r:'60-65%',n:9,c:'var(--o)'},
+    {r:'65-70%',n:11,c:'var(--c)'},{r:'70-75%',n:9,c:'var(--c)'},
+    {r:'75-80%',n:7,c:'var(--c)'},{r:'80-85%',n:8,c:'var(--g)'},
+    {r:'85-90%',n:5,c:'var(--g)'},{r:'90-100%',n:6,c:'var(--g)'},
+  ];
+  const maxN=Math.max(...buckets.map(b=>b.n));
+  const container=document.getElementById('acc-dist');
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width','100%'); svg.setAttribute('height','130');
+  svg.setAttribute('viewBox',`0 0 ${buckets.length*30} 130`);
+  svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+
+  // bg
+  const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  rect.setAttribute('width',buckets.length*30); rect.setAttribute('height','130');
+  rect.setAttribute('fill','rgba(0,8,22,.6)'); svg.appendChild(rect);
+
+  buckets.forEach((b,i)=>{
+    const bh=(b.n/maxN)*88;
+    const x=i*30+5, y=95-bh;
+    const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',x); r.setAttribute('y',y);
+    r.setAttribute('width',20); r.setAttribute('height',bh);
+    r.setAttribute('rx',1); r.setAttribute('fill',b.c); r.setAttribute('opacity','.68');
+    svg.appendChild(r);
+    const n=document.createElementNS('http://www.w3.org/2000/svg','text');
+    n.setAttribute('x',x+10); n.setAttribute('y',y-4);
+    n.setAttribute('text-anchor','middle'); n.setAttribute('font-size','7.5');
+    n.setAttribute('fill','rgba(180,210,240,.55)');
+    n.setAttribute('font-family','JetBrains Mono,monospace');
+    n.textContent=b.n; svg.appendChild(n);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',x+10); t.setAttribute('y',110);
+    t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','6.5');
+    t.setAttribute('fill','rgba(100,150,190,.45)');
+    t.setAttribute('font-family','JetBrains Mono,monospace');
+    t.textContent=b.r.split('-')[0]+'%'; svg.appendChild(t);
+  });
+
+  // Chance line at bucket index 3.5 (50%)
+  const cx=4*30+5, ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+  ln.setAttribute('x1',cx+10); ln.setAttribute('y1',4);
+  ln.setAttribute('x2',cx+10); ln.setAttribute('y2',97);
+  ln.setAttribute('stroke','rgba(255,51,85,.35)'); ln.setAttribute('stroke-width','1');
+  ln.setAttribute('stroke-dasharray','3,3'); svg.appendChild(ln);
+  const lt=document.createElementNS('http://www.w3.org/2000/svg','text');
+  lt.setAttribute('x',cx+13); lt.setAttribute('y',12);
+  lt.setAttribute('font-size','6'); lt.setAttribute('fill','rgba(255,51,85,.45)');
+  lt.setAttribute('font-family','JetBrains Mono,monospace'); lt.textContent='chance'; svg.appendChild(lt);
+
+  // Mean line at ~65%: bucket 6 (65-70)
+  const mx=6*30+5+10, ml=document.createElementNS('http://www.w3.org/2000/svg','line');
+  ml.setAttribute('x1',mx); ml.setAttribute('y1',4);
+  ml.setAttribute('x2',mx); ml.setAttribute('y2',97);
+  ml.setAttribute('stroke','rgba(0,212,255,.4)'); ml.setAttribute('stroke-width','1');
+  ml.setAttribute('stroke-dasharray','3,3'); svg.appendChild(ml);
+  const mt=document.createElementNS('http://www.w3.org/2000/svg','text');
+  mt.setAttribute('x',mx+3); mt.setAttribute('y',12);
+  mt.setAttribute('font-size','6'); mt.setAttribute('fill','rgba(0,212,255,.5)');
+  mt.setAttribute('font-family','JetBrains Mono,monospace'); mt.textContent='65.3%'; svg.appendChild(mt);
+
+  container.appendChild(svg);
+})();
+
+
+/* ══════════════════════════════════════════════
+   EXPERIMENTS LIST
+══════════════════════════════════════════════ */
+const EXPS = [
+  {n:'EmPath Stacked Fusion',    a:65.3, std:'±14.1%', t:'BEST',       c:'var(--c)',  best:true},
+  {n:'DANN + RF Landmarks',      a:64.7, std:'±11.8%', t:'NOVEL',      c:'var(--p)'},
+  {n:'Early Fusion',             a:64.6, std:'—',      t:'ABLATION',   c:'var(--muted)'},
+  {n:'Velocity + Biosignal',     a:64.0, std:'±12.7%', t:'NOVEL',      c:'var(--p)'},
+  {n:'Subject Adaptation RF',    a:65.1, std:'—',      t:'ABLATION',   c:'var(--muted)'},
+  {n:'CORAL Ordinal MLP',        a:65.3, std:'—',      t:'ABLATION',   c:'var(--muted)'},
+  {n:'Biosignal RF (person-norm)',a:63.1, std:'±11.6%', t:'ABLATION',  c:'var(--muted)'},
+  {n:'GNN + Biosignal',          a:63.1, std:'±11.9%', t:'NOVEL',      c:'var(--p)'},
+  {n:'CrossMod Attention',       a:63.1, std:'±11.1%', t:'NOVEL',      c:'var(--p)'},
+  {n:'DANN Biosignal Only',      a:61.6, std:'±10.3%', t:'NOVEL',      c:'var(--p)'},
+  {n:'Landmark RF (flat)',       a:61.4, std:'±13.1%', t:'ABLATION',   c:'var(--muted)'},
+  {n:'Ordinal MLP',              a:61.2, std:'—',      t:'ABLATION',   c:'var(--muted)'},
+  {n:'Velocity RF Only',         a:60.0, std:'±11.9%', t:'NOVEL',      c:'var(--p)'},
+  {n:'Hybrid CNN + hand feat',   a:59.7, std:'—',      t:'ABLATION',   c:'var(--muted)'},
+  {n:'Biosignal RF (67 subj)',   a:59.1, std:'—',      t:'ABLATION',   c:'var(--muted)'},
+  {n:'Tiny-BioMoE + hand feat',  a:61.7, std:'—',      t:'FOUNDATION', c:'var(--o)'},
+  {n:'Tiny-BioMoE',              a:56.7, std:'—',      t:'FOUNDATION', c:'var(--o)'},
+  {n:'BIOT + hand features',     a:60.8, std:'—',      t:'FOUNDATION', c:'var(--o)'},
+  {n:'BIOT Foundation Model',    a:54.4, std:'—',      t:'FOUNDATION', c:'var(--o)'},
+  {n:'PainFormer',               a:53.1, std:'—',      t:'FOUNDATION', c:'var(--o)'},
+  {n:'Biosignal TCN',            a:55.9, std:'—',      t:'BASELINE',   c:'var(--muted)'},
+  {n:'Biosignal MLP',            a:51.2, std:'—',      t:'BASELINE',   c:'var(--muted)'},
+  {n:'Biosignal SVM',            a:48.8, std:'—',      t:'BASELINE',   c:'var(--muted)'},
+  {n:'GNN Landmarks Only',       a:51.7, std:'±9.8%',  t:'NOVEL',      c:'var(--p)'},
+  {n:'CrossMod-T 2025 (SOTA)*',  a:87.5, std:'—',      t:'ALL SUBJ.',  c:'rgba(255,51,85,.65)'},
+];
+
+const expEl = document.getElementById('exp-list');
+expEl.innerHTML = EXPS.map(e=>{
+  const bw = ((e.a-35)/(87.5-35)*100).toFixed(1);
+  const bc = e.best?'var(--c)':e.t==='NOVEL'?'var(--p)':e.t==='FOUNDATION'?'var(--o)':e.t==='ALL SUBJ.'?'var(--r)':'rgba(100,140,180,.35)';
+  return `
+  <div class="exp-row${e.best?' best':''}">
+    <span class="exp-name">${e.n}</span>
+    <span class="exp-badge" style="color:${e.c}">${e.t}</span>
+    <div class="exp-track"><div class="exp-bar" style="--w:${bw}%;background:${bc}"></div></div>
+    <span class="exp-acc">${e.a}%</span>
+    <span class="exp-std">${e.std}</span>
+  </div>`;
+}).join('');
+
+// re-observe experiment bars
+document.querySelectorAll('.exp-row').forEach(r=>io.observe(r));
+document.querySelectorAll('.sb-row').forEach(r=>io.observe(r));
+
+
+/* ══════════════════════════════════════════════
+   INIT DEMO — load default subject on page load
+══════════════════════════════════════════════ */
+(function initDemo(){
+  const sid  = '070109_m_30';
+  const samps = DEMO_SAMPLES[sid];
+  const subj  = DEMO_SUBJECTS.find(s=>s.id===sid);
+
+  // Populate sample selector
+  const sampSel = document.getElementById('samp-sel');
+  sampSel.innerHTML = samps.map(s=>'<option value="'+s.id+'">'+s.lbl+'</option>').join('');
+  sampSel.value = 'PA3_t1';
+
+  // Tier badge
+  const badge = document.getElementById('subj-tier-badge');
+  badge.textContent = subj.tier;
+  badge.style.color = subj.tc;
+  badge.style.background = subj.bg;
+  badge.style.borderColor = subj.bc;
+
+  // Load PA3 trial 1 as default (most visually striking)
+  updateDemo(samps.find(s=>s.id==='PA3_t1'));
+})();
+</script>
+</body>
+</html>
