@@ -1,5 +1,6 @@
+# Result: CrossMod cross-attention LOSO-67: 63.1%
 """
-CrossMod — Cross-Modal Attention Fusion (Biosignals ↔ Landmarks)
+CrossMod - Cross-Modal Attention Fusion (Biosignals + Landmarks)
 ================================================================
 Novel contribution: proper cross-modal attention between biosignal and
 landmark embeddings, replacing the LogReg meta-learner in the stacked fusion.

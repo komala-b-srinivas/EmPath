@@ -1,5 +1,6 @@
+# Result: DANN biosignal LOSO-67: 61.6% | DANN + RF landmarks stacked: 64.7%
 """
-DANN — Domain-Adversarial Neural Network on Biosignal Features
+DANN - Domain-Adversarial Neural Network on Biosignal Features
 ==============================================================
 Novel contribution: adversarial domain adaptation for subject-invariant
 pain feature learning.

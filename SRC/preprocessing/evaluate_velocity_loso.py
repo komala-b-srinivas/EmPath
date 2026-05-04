@@ -1,5 +1,6 @@
+# Result: Velocity RF LOSO-67: 60.0% | Velocity + biosignal stacked: 64.0%
 """
-Landmark Velocity Features — Optical Flow Proxy on MediaPipe Landmarks
+Landmark Velocity Features - Optical Flow Proxy on MediaPipe Landmarks
 ======================================================================
 Novel contribution: instead of static landmark positions (where the face is),
 use VELOCITY of landmarks (how fast the face is moving) to detect PA2 vs PA3.

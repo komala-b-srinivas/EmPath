@@ -1,3 +1,4 @@
+# SLURM job script used to run SHAP feature importance analysis on Hofstra HPC cluster.
 #!/bin/bash
 #SBATCH --job-name=empath_shap
 #SBATCH --output=%j_shap.out
