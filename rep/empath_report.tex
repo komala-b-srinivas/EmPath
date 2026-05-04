@@ -526,10 +526,13 @@ autonomic co-activation patterns not encoded in univariate statistics.
 
 \begin{table*}[t]
 \centering
-\caption{Complete Biosignal Feature Set (35 Features)}
+\caption{Complete Biosignal Feature Set (35 Features). Features are listed in
+CSV column order as they appear in \texttt{Results/biosignals\_hrv/all\_67\_hrv.csv}.
+Similarity features (\texttt{\_sim\_corr}, \texttt{\_sim\_mi}) are computed against
+each subject's own resting-state BL1 recording, not cross-signal.}
 \label{tab:features}
 \small
-\begin{tabular}{llp{8cm}}
+\begin{tabular}{llp{7.8cm}}
 \toprule
 \textbf{Domain} & \textbf{Feature} & \textbf{Description} \\
 \midrule
@@ -538,43 +541,43 @@ autonomic co-activation patterns not encoded in univariate statistics.
   & \texttt{gsr\_std}        & Standard deviation (response amplitude) \\
   & \texttt{gsr\_slope}      & Linear trend (polyfit deg-1 coefficient) \\
   & \texttt{gsr\_shannon}    & Shannon entropy of conductance histogram \\
-  & \texttt{gsr\_sim\_corr}  & GSR $\times$ ECG Pearson correlation \\
-  & \texttt{gsr\_sim\_mi}    & GSR $\times$ ECG mutual information \\
-  & \texttt{gsr\_x\_ecg}     & Element-wise product mean (co-activation) \\
+  & \texttt{gsr\_sim\_corr}  & GSR vs.\ resting baseline Pearson correlation \\
+  & \texttt{gsr\_sim\_mi}    & GSR vs.\ resting baseline mutual information \\
+  & \texttt{gsr\_x\_ecg}     & Element-wise product mean (GSR--ECG co-activation) \\
 \midrule
 \multirow{6}{*}{ECG}
   & \texttt{ecg\_mean}       & Mean amplitude \\
   & \texttt{ecg\_std}        & Amplitude variability \\
   & \texttt{ecg\_max}        & Peak amplitude \\
   & \texttt{ecg\_shannon}    & Signal entropy \\
-  & \texttt{ecg\_sim\_corr}  & ECG self-correlation \\
-  & \texttt{ecg\_sim\_mi}    & ECG mutual information \\
+  & \texttt{ecg\_sim\_corr}  & ECG vs.\ resting baseline Pearson correlation \\
+  & \texttt{ecg\_sim\_mi}    & ECG vs.\ resting baseline mutual information \\
 \midrule
-\multirow{4}{*}{HRV}
-  & \texttt{hrv\_meannn}     & Mean RR interval (ms) \\
-  & \texttt{hrv\_sdnn}       & RR interval standard deviation \\
-  & \texttt{hrv\_rmssd}      & Root mean square successive differences \\
-  & \texttt{hrv\_pnn50}      & Proportion of RR diffs $>$ 50 ms \\
-\midrule
-\multirow{18}{*}{EMG}
-  & \texttt{emg\_trap\_mean}       & Trapezoid channel mean activation \\
-  & \texttt{emg\_trap\_std}        & Trapezoid channel standard deviation \\
-  & \texttt{emg\_trap\_max}        & Trapezoid channel peak activation \\
-  & \texttt{emg\_trap\_min}        & Trapezoid channel minimum \\
-  & \texttt{emg\_trap\_slope}      & Trapezoid linear trend (polyfit) \\
-  & \texttt{emg\_trap\_shannon}    & Trapezoid Shannon entropy \\
+\multirow{16}{*}{EMG}
+  & \texttt{emg\_trap\_mean}       & Trapezius channel mean activation \\
+  & \texttt{emg\_trap\_std}        & Trapezius channel standard deviation \\
+  & \texttt{emg\_trap\_sim\_corr}  & Trapezius vs.\ resting baseline Pearson correlation \\
+  & \texttt{emg\_trap\_sim\_mi}    & Trapezius vs.\ resting baseline mutual information \\
   & \texttt{emg\_corr\_mean}       & Corrugator channel mean activation \\
   & \texttt{emg\_corr\_std}        & Corrugator channel standard deviation \\
   & \texttt{emg\_corr\_max}        & Corrugator channel peak activation \\
-  & \texttt{emg\_corr\_min}        & Corrugator channel minimum \\
-  & \texttt{emg\_corr\_slope}      & Corrugator linear trend (polyfit) \\
   & \texttt{emg\_corr\_shannon}    & Corrugator Shannon entropy \\
+  & \texttt{emg\_corr\_sim\_corr}  & Corrugator vs.\ resting baseline Pearson correlation \\
+  & \texttt{emg\_corr\_sim\_mi}    & Corrugator vs.\ resting baseline mutual information \\
   & \texttt{emg\_zyg\_mean}        & Zygomaticus channel mean activation \\
   & \texttt{emg\_zyg\_std}         & Zygomaticus channel standard deviation \\
-  & \texttt{emg\_zyg\_max}         & Zygomaticus channel peak activation \\
-  & \texttt{emg\_zyg\_min}         & Zygomaticus channel minimum \\
-  & \texttt{emg\_asymmetry}        & Trapezoid $-$ Corrugator mean \\
-  & \texttt{emg\_zyg\_corr\_ratio} & Zygomaticus / Corrugator ratio \\
+  & \texttt{emg\_zyg\_shannon}     & Zygomaticus Shannon entropy \\
+  & \texttt{emg\_zyg\_sim\_corr}   & Zygomaticus vs.\ resting baseline Pearson correlation \\
+  & \texttt{emg\_zyg\_sim\_mi}     & Zygomaticus vs.\ resting baseline mutual information \\
+  & \texttt{emg\_asymmetry}        & Normalized absolute difference between trapezius and corrugator mean activation \\
+\midrule
+\multirow{6}{*}{HRV}
+  & \texttt{hrv\_pnn50}            & Proportion of successive RR differences $>$ 50\,ms \\
+  & \texttt{hrv\_rmssd}            & Root mean square of successive RR differences \\
+  & \texttt{hrv\_sdnn}             & Standard deviation of RR intervals \\
+  & \texttt{hrv\_meannn}           & Mean RR interval (ms) \\
+  & \texttt{hrv\_lf\_hf\_ratio}    & LF/HF power ratio (sympathovagal balance) \\
+  & \texttt{parasympathetic\_tone} & RMSSD normalized by mean heart rate \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -584,9 +587,11 @@ autonomic co-activation patterns not encoded in univariate statistics.
 \subsubsection{Video Processing}
 
 For each trial, 24 evenly spaced frames were sampled from the 5.5-second video window,
-yielding a temporal resolution of approximately one frame per 230 milliseconds. This
-sampling rate was chosen to capture low-frequency facial deformation dynamics (brow
-lowering, mouth opening) while avoiding redundant computation. MediaPipe FaceMesh
+yielding a temporal resolution of approximately one frame per 230 milliseconds.
+Frames were sampled from the latter 60\% of each trial window (onset at 40\% of
+total frames) to avoid the pre-stimulus baseline period. This sampling rate was
+chosen to capture low-frequency facial deformation dynamics (brow lowering, mouth
+opening) while avoiding redundant computation. MediaPipe FaceMesh
 (\cite{Lugaresi2019}) was applied to each frame with the \texttt{refine\_landmarks=True}
 option, yielding 468 three-dimensional $(x, y, z)$ landmark coordinates normalized to the
 face bounding box.
@@ -1268,8 +1273,8 @@ across all 67 subjects.
 \end{tikzpicture}
 \caption{Distribution of per-subject LOSO fold accuracy ($N = 67$). The distribution is
 roughly normal, centered near the population mean (65.3\%), with high variance
-(\textit{SD} = 14.1\%). Four subjects achieve $\geq$90\% accuracy; three subjects achieve
-$\leq$43\%.}
+(\textit{SD} = 14.1\%). Four subjects achieve $\geq$90\% accuracy; five subjects achieve
+$\leq$42.5\%.}
 \label{fig:persubj}
 \end{figure}
 
@@ -1284,8 +1289,8 @@ Table~\ref{tab:tiers} categorizes subjects by performance tier.
 \toprule
 \textbf{Tier} & \textbf{Accuracy Range} & \textbf{N (\%)} \\
 \midrule
-Excellent    & $\geq$80\%   & 11 (16.4\%) \\
-Good         & 65--79\%     & 26 (38.8\%) \\
+Excellent    & $\geq$80\%   & 14 (20.9\%) \\
+Good         & 65--79\%     & 23 (34.3\%) \\
 Near-chance  & 50--64\%     & 23 (34.3\%) \\
 Below chance & $<$50\%      & 7 (10.4\%) \\
 \bottomrule
