@@ -740,7 +740,11 @@ All models are evaluated under LOSO cross-validation: in each of 67 folds, one s
 held out for testing while the remaining 66 subjects (2,640 samples) provide training data.
 The held-out subject's 40 samples (20 PA2, 20 PA3) constitute the test set. No data from
 the test subject appears in feature normalization statistics, hyperparameter selection, or
-model training, ensuring strict evaluation of cross-subject generalization.
+model training, ensuring strict evaluation of cross-subject generalization. To support
+reproducibility, the subject-level fold indices and pre-computed feature matrices are
+saved in \texttt{Data/splits/} and \texttt{Results/} respectively, so all reported
+results can be exactly reproduced by re-running the evaluation scripts without repeating
+the feature extraction pipeline.
 
 Figure~\ref{fig:loso} illustrates the fold structure.
 
@@ -861,7 +865,10 @@ per-fold accuracy values.
 SHAP (SHapley Additive exPlanations; \cite{Lundberg2017}) provides theoretically grounded
 feature attribution values satisfying axioms of efficiency, symmetry, dummy, and additivity.
 We applied TreeExplainer to both trained base models after a full-data re-fit for
-interpretability, computing mean absolute SHAP values across all 2,680 samples.
+interpretability, computing mean absolute SHAP values across all 2,680 samples. SHAP
+computation was performed on the Hofstra University HPC cluster using the SLURM job
+script in \texttt{SRC/utils/run\_shap.slurm} (16~GB memory, 8 CPU cores, approximately
+12 minutes wall time).
 Code Snippet~\ref{lst:shap} shows the computation.
 
 \begin{lstlisting}[caption={SHAP TreeExplainer applied to the biosignal Random Forest. The same procedure applies to the landmark RF.}, label={lst:shap}]
@@ -1404,8 +1411,11 @@ non-adversarial baseline, suggesting the adversarial objective is undertrained w
 67 discrete subject domains. Temporal velocity features achieve 60.0\% alone and 64.0\%
 stacked. A CrossMod cross-attention architecture with dedicated transformer encoders per
 modality achieves 63.1\%, below the simpler stacked generalization baseline.
-Implementation details for all variants are available in
-\texttt{SRC/preprocessing/}.
+Implementation details for all variants are available in \texttt{SRC/preprocessing/}:
+DANN in \texttt{evaluate\_dann\_loso.py}, velocity features in
+\texttt{evaluate\_velocity\_loso.py}, CrossMod attention in
+\texttt{evaluate\_crossmod\_loso.py}, and the GNN in
+\texttt{evaluate\_gnn\_landmarks\_loso.py}.
 
 \subsection{Domain Adaptation Results}
 
@@ -1545,7 +1555,8 @@ require larger and more demographically diverse datasets, temporal modeling of p
 dynamics, and explicit calibration mechanisms that adapt models to individual physiological
 baselines at deployment time. EmPath establishes an empirically grounded performance
 reference point and a transparent feature attribution framework against which future
-advances can be benchmarked.
+advances can be benchmarked. An interactive demonstration of the system is publicly
+accessible as a Streamlit web application.\footnote{\url{https://komala-b-srinivas-empath-app-oxt9of.streamlit.app/}}
 
 % =========================================================
 \section*{Data Availability}
@@ -1560,7 +1571,7 @@ and SHAP analysis is available from the author upon request.
 % =========================================================
 
 K.B.S. conceived and designed the study, performed all data analysis and coding, and wrote
-the manuscript. Dr.~Jianchen Shan provided supervision and feedback.
+the manuscript. Dr.~Purna Prasad provided supervision and feedback throughout the project.
 
 % =========================================================
 \printbibliography[title={References}]
