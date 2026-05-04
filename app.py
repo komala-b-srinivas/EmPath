@@ -644,8 +644,8 @@ with t3:
                 showscale=False,
             ))
             fig_cm.update_layout(
-                height=320, **base_fig(h=320, title="LOSO-67 overall · 2,680 samples",
-                                       margin=dict(l=8,r=8,t=50,b=8))
+                **base_fig(h=320, title="LOSO-67 overall · 2,680 samples",
+                           margin=dict(l=8,r=8,t=50,b=8))
             )
             fig_cm.update_xaxes(side="top")
             st.plotly_chart(fig_cm, use_container_width=True)
