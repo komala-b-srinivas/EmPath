@@ -1,6 +1,6 @@
 """
-EmPath v2 — Multimodal Pain Intensity Detection
-Streamlit demo app  ·  Komala Belur Srinivas  ·  Hofstra University
+EmPath v2  -  Multimodal Pain Intensity Detection
+Streamlit demo app  /  Komala Belur Srinivas  /  Hofstra University
 Live: https://komala-b-srinivas-empath-app-oxt9of.streamlit.app/
 """
 
@@ -16,8 +16,8 @@ import streamlit as st
 # PAGE CONFIG
 # ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="EmPath — Pain Detection",
-    page_icon="🧠",
+    page_title="EmPath  -  Pain Detection",
+    page_icon=":brain:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -194,7 +194,7 @@ def base_fig(h=320, title=None, xlab=None, ylab=None, margin=None):
 with st.sidebar:
     st.markdown("""
     <div style="text-align:center;padding:.5rem 0 1rem;">
-        <div style="font-size:2rem;margin-bottom:.3rem;">🧠</div>
+        
         <div style="font-size:1.05rem;font-weight:800;color:#f1f5f9;">EmPath v2</div>
         <div style="font-size:.7rem;color:#475569;margin-top:.2rem;">
             Multimodal Pain Detection
@@ -244,8 +244,8 @@ with st.sidebar:
     st.markdown("""
     <div style="font-size:.68rem;color:#334155;line-height:1.9;text-align:center;">
         BioVid Heat Pain Database<br>
-        Hofstra University · M.S. CS<br>
-        Komala Belur Srinivas · 2026
+        Hofstra University / M.S. CS<br>
+        Komala Belur Srinivas / 2026
     </div>
     """, unsafe_allow_html=True)
 
@@ -273,7 +273,7 @@ st.markdown("""
                 border-radius:50%;transform:translate(-30%,30%);"></div>
     <div style="position:relative;">
         <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.5rem;">
-            <span style="font-size:1.8rem;">🧠</span>
+            
             <div>
                 <div style="font-size:1.8rem;font-weight:800;color:#f1f5f9;line-height:1.1;">EmPath</div>
                 <div style="font-size:.75rem;color:#38bdf8;font-weight:600;letter-spacing:.08em;">
@@ -284,7 +284,7 @@ st.markdown("""
         <p style="font-size:.88rem;color:#94a3b8;max-width:680px;line-height:1.7;margin:.6rem 0 1.2rem;">
             Discriminates <b style="color:#38bdf8;">moderate pain (PA2, ~43°C)</b> from
             <b style="color:#f87171;">intense pain (PA3, ~45°C)</b> using 35 biosignal features
-            (GSR · ECG · EMG · HRV) and 22 facial landmark features from MediaPipe FaceMesh —
+            (GSR / ECG / EMG / HRV) and 22 facial landmark features from MediaPipe FaceMesh  - 
             fused via stacked generalization evaluated with strict LOSO cross-validation on
             <b style="color:#f1f5f9;">67 thermally reactive subjects</b>.
         </p>
@@ -304,16 +304,16 @@ st.markdown("""
 # MAIN TABS
 # ─────────────────────────────────────────────────────────────────────────────
 t1, t2, t3, t4, t5 = st.tabs([
-    "🎯  Live Demo",
-    "🔬  Feature Analysis",
-    "📊  Performance",
-    "🏗️  Architecture",
-    "🏥  Clinical Context",
+    "Live Demo",
+    "Feature Analysis",
+    "Performance",
+    "Architecture",
+    "Clinical Context",
 ])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 1 — LIVE DEMO
+# TAB 1  -  LIVE DEMO
 # ══════════════════════════════════════════════════════════════════════════════
 with t1:
     if selected_sample is None or demo_df is None:
@@ -338,7 +338,7 @@ with t1:
         # ── Result banner ────────────────────────────────────────────────────
         banner_bg  = "rgba(3,105,161,.18)" if pred == 0 else "rgba(159,18,57,.18)"
         banner_bdr = "#38bdf8" if pred == 0 else "#f87171"
-        verdict_icon = "✅" if correct else ("❌" if correct is not None else "")
+        verdict_icon = "[correct]" if correct else ("[wrong]" if correct is not None else "")
         st.markdown(
             f'<div style="background:{banner_bg};border:1.5px solid {banner_bdr}44;'
             f'border-radius:16px;padding:1.4rem 1.8rem;margin-bottom:1rem;'
@@ -348,7 +348,7 @@ with t1:
             f'color:{PAIN_COL};font-weight:700;margin-bottom:.3rem;">Prediction</div>'
             f'<div style="font-size:1.9rem;font-weight:900;color:#f1f5f9;line-height:1;">{pred_full}</div>'
             f'<div style="font-size:.82rem;color:#64748b;margin-top:.3rem;">'
-            f'Stimulus temperature {pred_temp} &nbsp;·&nbsp; {conf:.1f}% confidence</div>'
+            f'Stimulus temperature {pred_temp}  |  {conf:.1f}% confidence</div>'
             f'</div>'
             f'<div style="text-align:right;">'
             f'<div style="font-size:.65rem;color:#64748b;margin-bottom:.2rem;">Ground truth</div>'
@@ -397,8 +397,8 @@ with t1:
         with dem_m:
             st.markdown('<div class="sh">PA2 vs PA3 Probability</div>', unsafe_allow_html=True)
             for lbl, pval, grad, col in [
-                ("PA2 · Moderate", prob[0] * 100, "linear-gradient(90deg,#0369a1,#38bdf8)", "#38bdf8"),
-                ("PA3 · Intense",  prob[1] * 100, "linear-gradient(90deg,#9f1239,#f87171)", "#f87171"),
+                ("PA2 / Moderate", prob[0] * 100, "linear-gradient(90deg,#0369a1,#38bdf8)", "#38bdf8"),
+                ("PA3 / Intense",  prob[1] * 100, "linear-gradient(90deg,#9f1239,#f87171)", "#f87171"),
             ]:
                 st.markdown(
                     f'<div style="margin-bottom:.9rem;">'
@@ -413,9 +413,9 @@ with t1:
 
             st.markdown('<div class="sh" style="margin-top:.8rem;">Modality Votes</div>', unsafe_allow_html=True)
             for icon, lbl, pval, col in [
-                ("📡", "Biosignal RF",  bio_prob[1]*100, "#38bdf8"),
-                ("👁️", "Landmark RF",   lm_prob[1]*100,  "#34d399"),
-                ("🔗", "Fusion (final)", prob[1]*100,     PAIN_COL),
+                ("[bio]", "Biosignal RF",  bio_prob[1]*100, "#38bdf8"),
+                ("[lm]", "Landmark RF",   lm_prob[1]*100,  "#34d399"),
+                ("[fuse]", "Fusion (final)", prob[1]*100,     PAIN_COL),
             ]:
                 vote = "PA3" if pval > 50 else "PA2"
                 vc   = "#f87171" if pval > 50 else "#38bdf8"
@@ -423,7 +423,7 @@ with t1:
                     f'<div style="display:flex;justify-content:space-between;align-items:center;'
                     f'padding:.3rem .5rem;background:rgba(14,28,54,.5);border-radius:7px;margin-bottom:.25rem;">'
                     f'<span style="font-size:.74rem;color:#64748b;">{icon} {lbl}</span>'
-                    f'<span style="font-size:.74rem;font-weight:700;color:{vc};">{vote} · {pval:.0f}%</span>'
+                    f'<span style="font-size:.74rem;font-weight:700;color:{vc};">{vote} / {pval:.0f}%</span>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
@@ -474,28 +474,28 @@ with t1:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 2 — FEATURE ANALYSIS
+# TAB 2  -  FEATURE ANALYSIS
 # ══════════════════════════════════════════════════════════════════════════════
 with t2:
     CLINICAL_MAP = {
-        "gsr_slope":     ("Sweat Activation Speed",   "How fast sweat glands turn on — the fastest pain indicator"),
-        "gsr_std":       ("Sweat Turbulence",          "Fluctuation in GSR — high chaos = high arousal"),
+        "gsr_slope":     ("Sweat Activation Speed",   "How fast sweat glands turn on  -  the fastest pain indicator"),
+        "gsr_std":       ("Sweat Turbulence",          "Fluctuation in GSR  -  high chaos = high arousal"),
         "ecg_max":       ("Cardiac Peak",              "Peak ECG amplitude during the 5.5s window"),
         "gsr_shannon":   ("GSR Complexity",            "Information density of skin conductance signal"),
         "ecg_shannon":   ("Cardiac Complexity",        "Complexity of cardiac waveform under pain stimulus"),
         "gsr_sim_corr":  ("Sweat Pattern Match",       "Correlation to a canonical pain GSR template"),
-        "emg_trap_std":  ("Shoulder Tension Change",   "Trapezius variability — pain causes muscle bracing"),
-        "hrv_meannn":    ("Mean Beat Interval",        "Average R-R gap — drops when pain disrupts rhythm"),
-        "hrv_sdnn":      ("HRV Spread",                "Beat-to-beat variability — pain narrows this"),
+        "emg_trap_std":  ("Shoulder Tension Change",   "Trapezius variability  -  pain causes muscle bracing"),
+        "hrv_meannn":    ("Mean Beat Interval",        "Average R-R gap  -  drops when pain disrupts rhythm"),
+        "hrv_sdnn":      ("HRV Spread",                "Beat-to-beat variability  -  pain narrows this"),
         "ecg_std":       ("Cardiac Amplitude Spread",  "Standard deviation of ECG amplitude across window"),
     }
     LM_MAP = {
         "mouth_height_std":     ("Mouth Opening Variability",   "Involuntary mouth movement during 5.5s of pain"),
-        "mouth_width_std":      ("Lip Spread Variability",      "Lateral lip motion — retraction is a pain signal"),
-        "nose_width_std":       ("Nostril Flare",               "Nostril width changes — classic pain micro-expression"),
+        "mouth_width_std":      ("Lip Spread Variability",      "Lateral lip motion  -  retraction is a pain signal"),
+        "nose_width_std":       ("Nostril Flare",               "Nostril width changes  -  classic pain micro-expression"),
         "mouth_aspect_ratio_std":("Mouth Shape Dynamics",       "Ratio of height to width changing = expression"),
-        "left_brow_eye_dist_std":("L. Brow Movement",           "Left brow raising/lowering — most universal pain cue"),
-        "brow_eye_avg_std":     ("Bilateral Brow Movement",     "Both brows moving together — symmetric furrowing"),
+        "left_brow_eye_dist_std":("L. Brow Movement",           "Left brow raising/lowering  -  most universal pain cue"),
+        "brow_eye_avg_std":     ("Bilateral Brow Movement",     "Both brows moving together  -  symmetric furrowing"),
         "avg_eye_openness_mean":("Eye Openness",                "Pain causes orbital tightening and partial eye close"),
         "brow_furrow_std":      ("Brow Furrow Dynamics",        "More fluctuation = stronger pain expression"),
         "mouth_height_mean":    ("Mean Mouth Openness",         "Open mouth accompanies moderate-to-high pain"),
@@ -523,15 +523,15 @@ with t2:
         return fig
 
     with fa_l:
-        st.markdown('<div class="sh">Biosignal Features — SHAP Importance</div>', unsafe_allow_html=True)
-        fig_b = shap_bar(shap_bio, "GSR · ECG · EMG · HRV", "rgba(56,189,248,.9)", "rgba(56,189,248,.3)")
+        st.markdown('<div class="sh">Biosignal Features  -  SHAP Importance</div>', unsafe_allow_html=True)
+        fig_b = shap_bar(shap_bio, "GSR / ECG / EMG / HRV", "rgba(56,189,248,.9)", "rgba(56,189,248,.3)")
         if fig_b:
             st.plotly_chart(fig_b, use_container_width=True)
 
         if shap_bio is not None:
             rows = []
             for _, r in shap_bio.head(8).iterrows():
-                short, long = CLINICAL_MAP.get(r["feature"], (r["feature"], "—"))
+                short, long = CLINICAL_MAP.get(r["feature"], (r["feature"], " - "))
                 rows.append({"Feature": r["feature"], "|SHAP|": f"{r['mean_shap']:.4f}",
                              "Meaning": short, "Detail": long})
             st.dataframe(
@@ -545,7 +545,7 @@ with t2:
             )
 
         if os.path.exists(BIO_BEES):
-            st.markdown('<div class="sh" style="margin-top:.8rem;">SHAP Beeswarm — Biosignal</div>',
+            st.markdown('<div class="sh" style="margin-top:.8rem;">SHAP Beeswarm  -  Biosignal</div>',
                         unsafe_allow_html=True)
             st.image(BIO_BEES, use_container_width=True)
             st.markdown("""
@@ -558,7 +558,7 @@ with t2:
             </div>""", unsafe_allow_html=True)
 
     with fa_r:
-        st.markdown('<div class="sh">Facial Landmark Features — SHAP Importance</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sh">Facial Landmark Features  -  SHAP Importance</div>', unsafe_allow_html=True)
         fig_l = shap_bar(shap_lm, "MediaPipe FaceMesh Geometry", "rgba(52,211,153,.9)", "rgba(52,211,153,.3)")
         if fig_l:
             st.plotly_chart(fig_l, use_container_width=True)
@@ -566,7 +566,7 @@ with t2:
         if shap_lm is not None:
             rows2 = []
             for _, r in shap_lm.head(8).iterrows():
-                short, long = LM_MAP.get(r["feature"], (r["feature"], "—"))
+                short, long = LM_MAP.get(r["feature"], (r["feature"], " - "))
                 rows2.append({"Feature": r["feature"], "|SHAP|": f"{r['mean_shap']:.4f}",
                               "Meaning": short, "Detail": long})
             st.dataframe(
@@ -580,13 +580,13 @@ with t2:
             )
 
         if os.path.exists(LM_BEES):
-            st.markdown('<div class="sh" style="margin-top:.8rem;">SHAP Beeswarm — Landmark</div>',
+            st.markdown('<div class="sh" style="margin-top:.8rem;">SHAP Beeswarm  -  Landmark</div>',
                         unsafe_allow_html=True)
             st.image(LM_BEES, use_container_width=True)
             st.markdown("""
             <div class="insight">
                 <span style="font-size:.75rem;color:#94a3b8;">
-                High <b style="color:#f1f5f9;">mouth_height_std</b> (red) pushes toward PA3 —
+                High <b style="color:#f1f5f9;">mouth_height_std</b> (red) pushes toward PA3  - 
                 the patient is opening/closing their mouth more frequently.
                 All top landmark features end in <b style="color:#f1f5f9;">_std</b>:
                 pain expression is <i>dynamic</i>, not a fixed facial position.
@@ -595,7 +595,7 @@ with t2:
 
     # Combined top-16
     st.markdown('<div class="hdiv"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="sh">Combined Top Features — Both Modalities</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sh">Combined Top Features  -  Both Modalities</div>', unsafe_allow_html=True)
     if shap_bio is not None and shap_lm is not None:
         b8 = shap_bio.head(8).copy(); b8["mod"] = "Biosignal"
         l8 = shap_lm.head(8).copy();  l8["mod"] = "Landmark"
@@ -610,18 +610,18 @@ with t2:
             hovertemplate="<b>%{y}</b> (%{customdata})<br>|SHAP| = %{x:.4f}<extra></extra>",
             customdata=comb["mod"].tolist(),
         ))
-        fig_c.update_layout(**base_fig(h=380, title="Top-16 features — Blue=Biosignal · Green=Landmark",
+        fig_c.update_layout(**base_fig(h=380, title="Top-16 features  -  Blue=Biosignal / Green=Landmark",
                                        xlab="Mean |SHAP|"))
         fig_c.update_yaxes(tickfont=dict(family="JetBrains Mono", size=10, color="#94a3b8"))
         st.plotly_chart(fig_c, use_container_width=True)
         st.markdown("""
         <p style="font-size:.74rem;color:#475569;text-align:center;">
-        Both modalities appear in the top 16 — they carry non-redundant information about pain intensity.
+        Both modalities appear in the top 16  -  they carry non-redundant information about pain intensity.
         </p>""", unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 3 — PERFORMANCE
+# TAB 3  -  PERFORMANCE
 # ══════════════════════════════════════════════════════════════════════════════
 with t3:
     perf_tabs = st.tabs(["Confusion Matrix", "Per-Subject LOSO", "Ablation Table"])
@@ -636,15 +636,15 @@ with t3:
                 x=["Predicted PA2 (Moderate)", "Predicted PA3 (Intense)"],
                 y=["True PA2 (Moderate)", "True PA3 (Intense)"],
                 colorscale=[[0,"#060d1a"],[.3,"#0c2040"],[.7,"#0369a1"],[1,"#38bdf8"]],
-                text=[["884\n✓ Correct", "456\n✗ False Alarm"],
-                      ["470\n✗ Miss",    "870\n✓ Correct"]],
+                text=[["884\n+ Correct", "456\n- False Alarm"],
+                      ["470\n- Miss",    "870\n+ Correct"]],
                 texttemplate="%{text}",
                 textfont=dict(size=14, color="#f1f5f9"),
                 hovertemplate="True: %{y}<br>Predicted: %{x}<br>Count: %{z}<extra></extra>",
                 showscale=False,
             ))
             fig_cm.update_layout(
-                **base_fig(h=320, title="LOSO-67 overall · 2,680 samples",
+                **base_fig(h=320, title="LOSO-67 overall / 2,680 samples",
                            margin=dict(l=8,r=8,t=50,b=8))
             )
             fig_cm.update_xaxes(side="top")
@@ -667,12 +667,12 @@ with t3:
                 ("Top-left: Correct PA2 (884)",  "#38bdf8",
                  "884 samples where moderate pain was correctly classified. "
                  "<b>66.0% of all PA2 cases</b> predicted correctly."),
-                ("Top-right: PA2 → PA3 false alarm (456)", "#f87171",
+                ("Top-right: PA2 -> PA3 false alarm (456)", "#f87171",
                  "456 moderate-pain cases called intense. The 1°C difference makes these "
                  "biosignally ambiguous."),
-                ("Bottom-left: PA3 → PA2 miss (470)", "#fb923c",
+                ("Bottom-left: PA3 -> PA2 miss (470)", "#fb923c",
                  "470 intense-pain cases called moderate. Clinically, these are the most "
-                 "costly errors — missed pain."),
+                 "costly errors  -  missed pain."),
                 ("Bottom-right: Correct PA3 (870)", "#34d399",
                  "870 intense-pain samples correctly detected. "
                  "<b>64.9% of all PA3 cases</b> predicted correctly."),
@@ -701,13 +701,13 @@ with t3:
             sdf["rank"]    = range(1, len(sdf)+1)
             sdf["acc_pct"] = sdf["accuracy"]*100
             sdf["tier"]    = sdf["accuracy"].apply(
-                lambda a: "≥80% Excellent" if a>=.8
-                else "65–80% Good" if a>=.65
-                else "50–65% Near Chance" if a>=.5
+                lambda a: ">=80% Excellent" if a>=.8
+                else "65-80% Good" if a>=.65
+                else "50-65% Near Chance" if a>=.5
                 else "<50% Below Chance"
             )
-            TCOLS = {"≥80% Excellent":"#34d399","65–80% Good":"#38bdf8",
-                     "50–65% Near Chance":"#fb923c","<50% Below Chance":"#f87171"}
+            TCOLS = {">=80% Excellent":"#34d399","65-80% Good":"#38bdf8",
+                     "50-65% Near Chance":"#fb923c","<50% Below Chance":"#f87171"}
             sdf["color"] = sdf["tier"].map(TCOLS)
 
             ps_l, ps_r = st.columns([3, 2], gap="large")
@@ -736,7 +736,7 @@ with t3:
                                  annotation_text="Chance 50%", annotation_font_color="#f87171", annotation_font_size=9)
                 fig_sc.add_hline(y=65.3, line_dash="dash", line_color="rgba(56,189,248,.55)", line_width=1.5,
                                  annotation_text="Mean 65.3%", annotation_font_color="#38bdf8", annotation_font_size=9)
-                fig_sc.update_layout(**base_fig(h=300, xlab="Subject rank (worst→best)", ylab="Accuracy (%)"),
+                fig_sc.update_layout(**base_fig(h=300, xlab="Subject rank (worst->best)", ylab="Accuracy (%)"),
                                      yaxis_range=[15,108],
                                      legend=dict(orientation="h", x=0, y=1.12,
                                                  font=dict(size=10,color="#64748b"),
@@ -768,7 +768,7 @@ with t3:
 
                 fig_pie = go.Figure(go.Pie(
                     values=[n_exc,n_good,n_chance,n_below],
-                    labels=["≥80%","65–80%","50–65%","<50%"],
+                    labels=[">=80%","65-80%","50-65%","<50%"],
                     hole=.62,
                     marker=dict(colors=["#34d399","#38bdf8","#fb923c","#f87171"],
                                 line=dict(color=["#050c18"]*4, width=3)),
@@ -788,9 +788,9 @@ with t3:
                 st.plotly_chart(fig_pie, use_container_width=True)
 
                 for n, lbl, col in [
-                    (n_exc,   "Excellent  ≥80%",     "#34d399"),
-                    (n_good,  "Good  65–80%",         "#38bdf8"),
-                    (n_chance,"Near Chance  50–65%",  "#fb923c"),
+                    (n_exc,   "Excellent  >=80%",     "#34d399"),
+                    (n_good,  "Good  65-80%",         "#38bdf8"),
+                    (n_chance,"Near Chance  50-65%",  "#fb923c"),
                     (n_below, "Below Chance  <50%",   "#f87171"),
                 ]:
                     pct = n/67*100
@@ -810,7 +810,7 @@ with t3:
                     <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;
                         color:#818cf8;margin-bottom:.3rem;">Why the wide variance?</div>
                     <p style="font-size:.74rem;color:#94a3b8;line-height:1.7;margin:0;">
-                        Some subjects' bodies respond nearly identically to 43°C and 44°C heat —
+                        Some subjects' bodies respond nearly identically to 43°C and 44°C heat  - 
                         their sweat, cardiac, and facial patterns are indistinguishable at 1°C apart.
                         This is <b style="color:#e2e8f0;">inter-individual biology</b>,
                         not a model failure.
@@ -822,38 +822,38 @@ with t3:
     # ── Ablation table ───────────────────────────────────────────────────────
     with perf_tabs[2]:
         ablation = [
-            {"Model": "EmPath Stacked Fusion",      "Protocol": "LOSO-67",   "Accuracy": "65.3%", "Std": "±14.1%", "Type": "🏆 Best"},
-            {"Model": "CORAL Ordinal MLP",           "Protocol": "LOSO-67",   "Accuracy": "65.3%", "Std": "—",      "Type": "Ablation"},
-            {"Model": "Subject Adaptation RF",       "Protocol": "LOSO-67",   "Accuracy": "65.1%", "Std": "—",      "Type": "Ablation"},
+            {"Model": "EmPath Stacked Fusion",      "Protocol": "LOSO-67",   "Accuracy": "65.3%", "Std": "±14.1%", "Type": " Best"},
+            {"Model": "CORAL Ordinal MLP",           "Protocol": "LOSO-67",   "Accuracy": "65.3%", "Std": " - ",      "Type": "Ablation"},
+            {"Model": "Subject Adaptation RF",       "Protocol": "LOSO-67",   "Accuracy": "65.1%", "Std": " - ",      "Type": "Ablation"},
             {"Model": "DANN + RF Landmarks",         "Protocol": "LOSO-67",   "Accuracy": "64.7%", "Std": "±11.8%", "Type": "Novel"},
-            {"Model": "Early Fusion (concat RF)",    "Protocol": "LOSO-67",   "Accuracy": "64.6%", "Std": "—",      "Type": "Ablation"},
+            {"Model": "Early Fusion (concat RF)",    "Protocol": "LOSO-67",   "Accuracy": "64.6%", "Std": " - ",      "Type": "Ablation"},
             {"Model": "Velocity + Biosignal Stacked","Protocol": "LOSO-67",   "Accuracy": "64.0%", "Std": "±12.7%", "Type": "Novel"},
             {"Model": "Biosignal RF (person-norm)",  "Protocol": "LOSO-67",   "Accuracy": "63.1%", "Std": "±11.6%", "Type": "Ablation"},
             {"Model": "GNN + Biosignal Stacked",     "Protocol": "LOSO-67",   "Accuracy": "63.1%", "Std": "±11.9%", "Type": "Novel"},
             {"Model": "CrossMod Cross-Attention",    "Protocol": "LOSO-67",   "Accuracy": "63.1%", "Std": "±11.1%", "Type": "Novel"},
-            {"Model": "Tiny-BioMoE + Hand Feats",    "Protocol": "LOSO-67",   "Accuracy": "61.7%", "Std": "—",      "Type": "Foundation"},
+            {"Model": "Tiny-BioMoE + Hand Feats",    "Protocol": "LOSO-67",   "Accuracy": "61.7%", "Std": " - ",      "Type": "Foundation"},
             {"Model": "DANN Biosignal Only",         "Protocol": "LOSO-67",   "Accuracy": "61.6%", "Std": "±10.3%", "Type": "Novel"},
             {"Model": "Landmark RF (flat)",          "Protocol": "LOSO-67",   "Accuracy": "61.4%", "Std": "±13.1%", "Type": "Ablation"},
-            {"Model": "Ordinal MLP",                 "Protocol": "LOSO-67",   "Accuracy": "61.2%", "Std": "—",      "Type": "Ablation"},
-            {"Model": "Attention Fusion",            "Protocol": "LOSO-67",   "Accuracy": "61.1%", "Std": "—",      "Type": "Ablation"},
-            {"Model": "BIOT + Hand Feats",           "Protocol": "LOSO-67",   "Accuracy": "60.8%", "Std": "—",      "Type": "Foundation"},
+            {"Model": "Ordinal MLP",                 "Protocol": "LOSO-67",   "Accuracy": "61.2%", "Std": " - ",      "Type": "Ablation"},
+            {"Model": "Attention Fusion",            "Protocol": "LOSO-67",   "Accuracy": "61.1%", "Std": " - ",      "Type": "Ablation"},
+            {"Model": "BIOT + Hand Feats",           "Protocol": "LOSO-67",   "Accuracy": "60.8%", "Std": " - ",      "Type": "Foundation"},
             {"Model": "Velocity RF Only",            "Protocol": "LOSO-67",   "Accuracy": "60.0%", "Std": "±11.9%", "Type": "Novel"},
             {"Model": "Biosignal RF (no norm)",      "Protocol": "LOSO-67",   "Accuracy": "59.9%", "Std": "±13.2%", "Type": "Ablation"},
-            {"Model": "Hybrid CNN + Hand Feats",     "Protocol": "LOSO-67",   "Accuracy": "59.7%", "Std": "—",      "Type": "Ablation"},
-            {"Model": "Tiny-BioMoE",                 "Protocol": "LOSO-67",   "Accuracy": "56.7%", "Std": "—",      "Type": "Foundation"},
-            {"Model": "Biosignal TCN",               "Protocol": "Random",    "Accuracy": "55.9%", "Std": "—",      "Type": "Baseline"},
-            {"Model": "BIOT Foundation Model",       "Protocol": "LOSO-67",   "Accuracy": "54.4%", "Std": "—",      "Type": "Foundation"},
-            {"Model": "PainFormer",                  "Protocol": "LOSO-67",   "Accuracy": "53.1%", "Std": "—",      "Type": "Foundation"},
+            {"Model": "Hybrid CNN + Hand Feats",     "Protocol": "LOSO-67",   "Accuracy": "59.7%", "Std": " - ",      "Type": "Ablation"},
+            {"Model": "Tiny-BioMoE",                 "Protocol": "LOSO-67",   "Accuracy": "56.7%", "Std": " - ",      "Type": "Foundation"},
+            {"Model": "Biosignal TCN",               "Protocol": "Random",    "Accuracy": "55.9%", "Std": " - ",      "Type": "Baseline"},
+            {"Model": "BIOT Foundation Model",       "Protocol": "LOSO-67",   "Accuracy": "54.4%", "Std": " - ",      "Type": "Foundation"},
+            {"Model": "PainFormer",                  "Protocol": "LOSO-67",   "Accuracy": "53.1%", "Std": " - ",      "Type": "Foundation"},
             {"Model": "GNN Landmarks Only",          "Protocol": "LOSO-67",   "Accuracy": "51.7%", "Std": "±9.8%",  "Type": "Novel"},
-            {"Model": "Biosignal MLP",               "Protocol": "Random",    "Accuracy": "51.2%", "Std": "—",      "Type": "Baseline"},
-            {"Model": "Biosignal SVM",               "Protocol": "Random",    "Accuracy": "48.8%", "Std": "—",      "Type": "Baseline"},
-            {"Model": "Vision MobileNetV2",          "Protocol": "Random",    "Accuracy": "47.2%", "Std": "—",      "Type": "Baseline"},
-            {"Model": "CrossMod-Transformer (2025)†","Protocol": "LOSO-87 all","Accuracy": "87.5%","Std": "—",      "Type": "SOTA (all subj)"},
+            {"Model": "Biosignal MLP",               "Protocol": "Random",    "Accuracy": "51.2%", "Std": " - ",      "Type": "Baseline"},
+            {"Model": "Biosignal SVM",               "Protocol": "Random",    "Accuracy": "48.8%", "Std": " - ",      "Type": "Baseline"},
+            {"Model": "Vision MobileNetV2",          "Protocol": "Random",    "Accuracy": "47.2%", "Std": " - ",      "Type": "Baseline"},
+            {"Model": "CrossMod-Transformer (2025)*","Protocol": "LOSO-87 all","Accuracy": "87.5%","Std": " - ",      "Type": "SOTA (all subj)"},
         ]
         adf = pd.DataFrame(ablation)
         adf["acc_num"] = adf["Accuracy"].str.replace("%","").astype(float)
         TYPE_COLS = {
-            "🏆 Best": "#38bdf8", "Novel": "#a78bfa", "Ablation": "#64748b",
+            " Best": "#38bdf8", "Novel": "#a78bfa", "Ablation": "#64748b",
             "Foundation": "#fb923c", "Baseline": "#475569",
             "SOTA (all subj)": "#f87171",
         }
@@ -868,7 +868,7 @@ with t3:
         fig_abl.add_vline(x=50,   line_dash="dot",  line_color="rgba(248,113,113,.4)", line_width=1)
         fig_abl.add_vline(x=65.3, line_dash="dash", line_color="rgba(56,189,248,.55)", line_width=1.5)
         fig_abl.update_layout(**base_fig(h=620, xlab="Accuracy (%)",
-                                         title="26-variant ablation — dashed lines: chance (50%) and EmPath best (65.3%)"),
+                                         title="26-variant ablation  -  dashed lines: chance (50%) and EmPath best (65.3%)"),
                               xaxis_range=[35,100])
         fig_abl.update_yaxes(autorange="reversed", tickfont=dict(size=10,color="#94a3b8"))
         st.plotly_chart(fig_abl, use_container_width=True)
@@ -885,28 +885,28 @@ with t3:
         )
         st.markdown("""
         <p style="font-size:.72rem;color:#334155;margin-top:.5rem;line-height:1.7;">
-        † CrossMod-Transformer 2025 (87.5%) evaluates on all 87 BioVid subjects including
+        * CrossMod-Transformer 2025 (87.5%) evaluates on all 87 BioVid subjects including
         20 non-reactive ones with flat biosignals, artificially inflating results.
         EmPath's LOSO-67 reactive-only protocol is the stricter, honest comparison.
         </p>""", unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 4 — ARCHITECTURE
+# TAB 4  -  ARCHITECTURE
 # ══════════════════════════════════════════════════════════════════════════════
 with t4:
     arch_l, arch_r = st.columns(2, gap="large")
     with arch_l:
         st.markdown('<div class="sh">Pipeline Overview</div>', unsafe_allow_html=True)
         steps = [
-            ("01", "#38bdf8", "Sensor Data",      "GSR · ECG · EMG",
+            ("01", "#38bdf8", "Sensor Data",      "GSR / ECG / EMG",
              "Three body sensors record for 5.5 seconds at 512 Hz (GSR) and 256 Hz (ECG/EMG)."),
-            ("02", "#a78bfa", "Facial Video",     "25 fps · 24 frames",
-             "MediaPipe FaceMesh maps 468 landmarks on each frame — brows, eyes, nose, mouth."),
+            ("02", "#a78bfa", "Facial Video",     "25 fps / 24 frames",
+             "MediaPipe FaceMesh maps 468 landmarks on each frame  -  brows, eyes, nose, mouth."),
             ("03", "#fb923c", "Feature Extraction","57 total features",
              "35 statistical + HRV features from biosignals. 22 geometric features from landmarks."),
             ("04", "#34d399", "Two RF Models",    "300 trees each",
-             "RF-Biosignal and RF-Landmark trained separately — each outputs PA2/PA3 probabilities."),
+             "RF-Biosignal and RF-Landmark trained separately  -  each outputs PA2/PA3 probabilities."),
             ("05", "#f87171", "Meta-Learner",     "Logistic Regression",
              "Sees 4 probability values (2 from each RF) and learns the optimal fusion weight."),
             ("06", "#38bdf8", "SHAP Explanation", "TreeExplainer",
@@ -954,21 +954,21 @@ RF Landmark               RF Biosignal
         decisions = [
             ("#38bdf8", "Why LOSO? (not random split)",
              "LOSO = Leave-One-Subject-Out. The model never sees ANY data from the test subject. "
-             "Random splits leak subject identity — the model memorizes individual physiology, "
+             "Random splits leak subject identity  -  the model memorizes individual physiology, "
              "inflating accuracy by ~8-10 pp. LOSO tests true generalization to new people, "
              "which is what clinical deployment requires."),
             ("#34d399", "Why person-specific normalization?",
              "Each person's physiological baseline is different. Person A's resting GSR may be "
              "10 μS, Person B's may be 2 μS. Global normalization conflates them. Person-specific "
-             "normalization converts each signal to 'X% above your own normal' — yielding "
-             "+3.2 pp improvement (59.9% → 63.1%)."),
+             "normalization converts each signal to 'X% above your own normal'  -  yielding "
+             "+3.2 pp improvement (59.9% -> 63.1%)."),
             ("#a78bfa", "Why Random Forest? (not deep learning)",
              "With only 67 subjects and ~2,680 samples, deep models overfit in LOSO. TCN=55.9%, "
              "MLP=51.2%, and foundation models (BIOT=54.4%, PainFormer=53.1%) all underperform "
              "the RF. RF is the empirically correct choice for this dataset size."),
             ("#fb923c", "Why stacked fusion? (not early fusion)",
-             "Early fusion: concatenate all 57 features → RF = 64.6%. "
-             "Stacked fusion: RF(bio) probs + RF(lm) probs → LogReg = 65.3%. "
+             "Early fusion: concatenate all 57 features -> RF = 64.6%. "
+             "Stacked fusion: RF(bio) probs + RF(lm) probs -> LogReg = 65.3%. "
              "Stacking preserves modality structure and combines calibrated probabilities "
              "rather than mixing raw features on different scales."),
         ]
@@ -986,8 +986,8 @@ RF Landmark               RF Biosignal
         st.markdown("""
         <div class="insight">
             <div style="font-size:.8rem;color:#cbd5e1;line-height:1.75;">
-                All 26 architectural variants — including deep learning (TCN, MLP), foundation models
-                (BIOT, PainFormer, Tiny-BioMoE), GNNs, DANN, and cross-attention — converge near or
+                All 26 architectural variants  -  including deep learning (TCN, MLP), foundation models
+                (BIOT, PainFormer, Tiny-BioMoE), GNNs, DANN, and cross-attention  -  converge near or
                 below <b style="color:#38bdf8;">65.3%</b>.<br><br>
                 The ceiling is set by <b style="color:#f1f5f9;">inter-individual physiological variability</b>
                 and the <b style="color:#f1f5f9;">1°C stimulus difference between PA2 and PA3</b>,
@@ -1015,7 +1015,7 @@ RF Landmark               RF Biosignal
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 5 — CLINICAL CONTEXT
+# TAB 5  -  CLINICAL CONTEXT
 # ══════════════════════════════════════════════════════════════════════════════
 with t5:
     clin_l, clin_r = st.columns(2, gap="large")
@@ -1026,7 +1026,7 @@ with t5:
             <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;
                 color:#38bdf8;margin-bottom:.5rem;">The Problem</div>
             <p style="font-size:.85rem;color:#cbd5e1;line-height:1.7;margin:0;">
-                Some patients — ICU sedation, neonates, dementia —
+                Some patients  -  ICU sedation, neonates, dementia  - 
                 <b style="color:#f1f5f9;">cannot self-report pain</b>.<br><br>
                 Without self-reporting, clinicians must estimate from behavior and physiology.
                 Under- or over-treating pain in these populations carries serious clinical risks.
@@ -1042,7 +1042,7 @@ with t5:
                 is the subject experiencing
                 <b style="color:#38bdf8;">moderate pain (PA2 ≈ 43°C)</b> or
                 <b style="color:#f87171;">intense pain (PA3 ≈ 45°C)</b>?<br><br>
-                Only 1°C apart — one of the most challenging pain discrimination tasks in
+                Only 1°C apart  -  one of the most challenging pain discrimination tasks in
                 the automated pain assessment literature.
             </p>
         </div>
@@ -1052,13 +1052,13 @@ with t5:
                     unsafe_allow_html=True)
         hw = [
             ("#1","#38bdf8","GSR Sensor","Wearable sweat patch, ICU adhesive electrode, or smartwatch optical",
-             "gsr_slope is the #1 feature by 3× margin — most critical hardware"),
+             "gsr_slope is the #1 feature by 3x margin  -  most critical hardware"),
             ("#2","#f87171","ECG / PPG Monitor","Standard ICU cardiac monitor, finger-clip pulse oximeter",
-             "ecg_max + ecg_shannon both in top 5 — cardiac response catches PA3"),
-            ("#3","#34d399","Bedside Camera","Any 25 fps camera at face level — even USB webcam works",
-             "mouth_height_std is #1 landmark feature — video is required"),
+             "ecg_max + ecg_shannon both in top 5  -  cardiac response catches PA3"),
+            ("#3","#34d399","Bedside Camera","Any 25 fps camera at face level  -  even USB webcam works",
+             "mouth_height_std is #1 landmark feature  -  video is required"),
             ("#4","#fb923c","EMG Electrodes","Adhesive surface electrodes on trapezius (shoulder/neck)",
-             "emg_trap_std ranks #9 overall — useful but not critical for minimal setup"),
+             "emg_trap_std ranks #9 overall  -  useful but not critical for minimal setup"),
         ]
         for pri, col, name, what, why in hw:
             st.markdown(
@@ -1098,20 +1098,20 @@ with t5:
                         <td style="text-align:right;color:#fb923c;">53.1%</td>
                     </tr>
                     <tr style="border-bottom:1px solid rgba(255,255,255,.04);background:rgba(56,189,248,.06);">
-                        <td style="font-weight:800;color:#38bdf8;padding:.4rem 0;">EmPath Stacked ★</td>
+                        <td style="font-weight:800;color:#38bdf8;padding:.4rem 0;">EmPath Stacked *</td>
                         <td style="text-align:center;font-size:.7rem;color:#38bdf8;">LOSO-67 reactive</td>
                         <td style="text-align:right;font-weight:900;color:#38bdf8;font-size:1.1rem;">65.3%</td>
                     </tr>
                     <tr>
-                        <td style="color:#64748b;padding:.4rem 0;">CrossMod-T 2025 †</td>
+                        <td style="color:#64748b;padding:.4rem 0;">CrossMod-T 2025 *</td>
                         <td style="text-align:center;color:#334155;font-size:.7rem;">LOSO-87 all</td>
                         <td style="text-align:right;color:#f87171;">87.5%</td>
                     </tr>
                 </tbody>
             </table>
             <p style="font-size:.66rem;color:#334155;margin:.65rem 0 0;line-height:1.65;">
-                ★ Reactive-only = stricter, honest protocol.<br>
-                † Includes 20 non-reactive subjects with flat biosignals.
+                * Reactive-only = stricter, honest protocol.<br>
+                * Includes 20 non-reactive subjects with flat biosignals.
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -1120,14 +1120,14 @@ with t5:
         st.markdown("""
         <div class="card">
             <div style="font-size:.78rem;line-height:2.3;color:#64748b;">
-                <span style="color:#34d399;font-weight:700;">✓</span> Non-invasive — no needles or procedures<br>
-                <span style="color:#34d399;font-weight:700;">✓</span> Real-time — feature extraction &lt;1 second<br>
-                <span style="color:#34d399;font-weight:700;">✓</span> SHAP-explainable — every prediction justified<br>
-                <span style="color:#34d399;font-weight:700;">✓</span> Multimodal — degrades gracefully if sensor fails<br>
-                <span style="color:#34d399;font-weight:700;">✓</span> LOSO validated — not memorizing physiology<br>
-                <span style="color:#f87171;font-weight:700;">✗</span> Research prototype — not clinically validated<br>
-                <span style="color:#f87171;font-weight:700;">✗</span> PA2 vs PA3 only — not a full pain scale<br>
-                <span style="color:#f87171;font-weight:700;">✗</span> BioVid lab conditions — not ICU validated
+                <span style="color:#34d399;font-weight:700;">+</span> Non-invasive  -  no needles or procedures<br>
+                <span style="color:#34d399;font-weight:700;">+</span> Real-time  -  feature extraction &lt;1 second<br>
+                <span style="color:#34d399;font-weight:700;">+</span> SHAP-explainable  -  every prediction justified<br>
+                <span style="color:#34d399;font-weight:700;">+</span> Multimodal  -  degrades gracefully if sensor fails<br>
+                <span style="color:#34d399;font-weight:700;">+</span> LOSO validated  -  not memorizing physiology<br>
+                <span style="color:#f87171;font-weight:700;">-</span> Research prototype  -  not clinically validated<br>
+                <span style="color:#f87171;font-weight:700;">-</span> PA2 vs PA3 only  -  not a full pain scale<br>
+                <span style="color:#f87171;font-weight:700;">-</span> BioVid lab conditions  -  not ICU validated
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1137,12 +1137,12 @@ with t5:
         ds_rows = [
             ("Database",  "BioVid Heat Pain (Walter et al., 2013)"),
             ("Stimulus",  "Peltier thermode on right forearm"),
-            ("PA2 temp",  "~43°C  ·  Moderate pain"),
-            ("PA3 temp",  "~44–45°C  ·  Intense pain"),
-            ("Subjects",  "87 total  →  67 reactive (20 excluded)"),
+            ("PA2 temp",  "~43°C  /  Moderate pain"),
+            ("PA3 temp",  "~44-45°C  /  Intense pain"),
+            ("Subjects",  "87 total  ->  67 reactive (20 excluded)"),
             ("Samples",   "2,680 total (PA2 + PA3 balanced)"),
             ("Signals",   "GSR, ECG, EMG (trapezius/corrugator/zygomaticus)"),
-            ("Video",     "640×480, 25 fps, frontal face view"),
+            ("Video",     "640x480, 25 fps, frontal face view"),
             ("Window",    "5.5 s per trial, 24 frames extracted"),
         ]
         for k, v in ds_rows:
@@ -1163,10 +1163,10 @@ st.markdown("""
 <div style="display:flex;justify-content:space-between;align-items:center;
             flex-wrap:wrap;gap:.5rem;padding:.5rem 0 1rem;">
     <div style="font-size:.68rem;color:#334155;line-height:1.9;">
-        EmPath v2 &nbsp;·&nbsp; Komala Belur Srinivas &nbsp;·&nbsp;
-        Hofstra University M.S. Computer Science &nbsp;·&nbsp; 2026<br>
-        BioVid Heat Pain Database &nbsp;·&nbsp;
-        Stacked RF Fusion (RF-Biosignal + RF-Landmark → LogisticRegression)
+        EmPath v2  |  Komala Belur Srinivas  | 
+        Hofstra University M.S. Computer Science  |  2026<br>
+        BioVid Heat Pain Database  | 
+        Stacked RF Fusion (RF-Biosignal + RF-Landmark -> LogisticRegression)
     </div>
     <div>
         <span class="tag">LOSO-67</span>
