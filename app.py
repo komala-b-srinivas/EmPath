@@ -12,6 +12,11 @@ import plotly.graph_objects as go
 import plotly.express as px
 import streamlit as st
 
+# Helper: strips leading/trailing whitespace so HTML strings start
+# with '<' rather than '\n<', which is required for Streamlit to render HTML
+def hmd(content: str) -> None:
+    st.markdown(content.strip(), unsafe_allow_html=True)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # PAGE CONFIG
 # ─────────────────────────────────────────────────────────────────────────────
@@ -25,7 +30,7 @@ st.set_page_config(
 # ─────────────────────────────────────────────────────────────────────────────
 # GLOBAL CSS
 # ─────────────────────────────────────────────────────────────────────────────
-st.markdown("""
+hmd("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -98,7 +103,7 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 [data-testid="stMetricValue"] { color: #f1f5f9 !important; font-size: 1.7rem !important; }
 [data-testid="stMetricLabel"] { color: #64748b !important; font-size: .72rem !important; }
 </style>
-""", unsafe_allow_html=True)
+""")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PATHS
@@ -192,7 +197,7 @@ def base_fig(h=320, title=None, xlab=None, ylab=None, margin=None):
 # SIDEBAR
 # ─────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("""
+    hmd("""
     <div style="text-align:center;padding:.5rem 0 1rem;">
         
         <div style="font-size:1.05rem;font-weight:800;color:#f1f5f9;">EmPath v2</div>
@@ -200,7 +205,7 @@ with st.sidebar:
             Multimodal Pain Detection
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     st.markdown('<div class="sh">Quick Stats</div>', unsafe_allow_html=True)
     for label, val, color in [
@@ -241,27 +246,27 @@ with st.sidebar:
         selected_sample = subj_rows.iloc[sel_idx]
 
     st.markdown('<div class="hdiv"></div>', unsafe_allow_html=True)
-    st.markdown("""
+    hmd("""
     <div style="font-size:.68rem;color:#334155;line-height:1.9;text-align:center;">
         BioVid Heat Pain Database<br>
         Hofstra University / M.S. CS<br>
         Komala Belur Srinivas / 2026
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
-    st.markdown("""
+    hmd("""
     <div style="text-align:center;margin-top:.8rem;">
         <a href="https://github.com/komalabelursrinivas/EmPath_v2"
            target="_blank" style="text-decoration:none;">
             <span class="tag">GitHub</span>
         </a>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # HERO BANNER
 # ─────────────────────────────────────────────────────────────────────────────
-st.markdown("""
+hmd("""
 <div style="background:linear-gradient(135deg,#0c1f3e 0%,#091529 50%,#0a1a32 100%);
             border:1px solid rgba(56,189,248,.14);border-radius:18px;
             padding:2rem 2.4rem 1.6rem;margin-bottom:1.2rem;position:relative;overflow:hidden;">
@@ -298,7 +303,7 @@ st.markdown("""
         </div>
     </div>
 </div>
-""", unsafe_allow_html=True)
+""")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # MAIN TABS
@@ -548,14 +553,14 @@ with t2:
             st.markdown('<div class="sh" style="margin-top:.8rem;">SHAP Beeswarm  -  Biosignal</div>',
                         unsafe_allow_html=True)
             st.image(BIO_BEES, use_container_width=True)
-            st.markdown("""
+            hmd("""
             <div class="insight">
                 <span style="font-size:.75rem;color:#94a3b8;">
                 Each dot = one recording. Horizontal position = push toward PA2 (left) or PA3 (right).
                 Color = raw feature value (blue=low, red=high).
                 Wide spread on <b style="color:#f1f5f9;">gsr_slope</b> shows it dominates all other features.
                 </span>
-            </div>""", unsafe_allow_html=True)
+            </div>""")
 
     with fa_r:
         st.markdown('<div class="sh">Facial Landmark Features  -  SHAP Importance</div>', unsafe_allow_html=True)
@@ -583,7 +588,7 @@ with t2:
             st.markdown('<div class="sh" style="margin-top:.8rem;">SHAP Beeswarm  -  Landmark</div>',
                         unsafe_allow_html=True)
             st.image(LM_BEES, use_container_width=True)
-            st.markdown("""
+            hmd("""
             <div class="insight">
                 <span style="font-size:.75rem;color:#94a3b8;">
                 High <b style="color:#f1f5f9;">mouth_height_std</b> (red) pushes toward PA3  - 
@@ -591,7 +596,7 @@ with t2:
                 All top landmark features end in <b style="color:#f1f5f9;">_std</b>:
                 pain expression is <i>dynamic</i>, not a fixed facial position.
                 </span>
-            </div>""", unsafe_allow_html=True)
+            </div>""")
 
     # Combined top-16
     st.markdown('<div class="hdiv"></div>', unsafe_allow_html=True)
@@ -614,10 +619,10 @@ with t2:
                                        xlab="Mean |SHAP|"))
         fig_c.update_yaxes(tickfont=dict(family="JetBrains Mono", size=10, color="#94a3b8"))
         st.plotly_chart(fig_c, use_container_width=True)
-        st.markdown("""
+        hmd("""
         <p style="font-size:.74rem;color:#475569;text-align:center;">
         Both modalities appear in the top 16  -  they carry non-redundant information about pain intensity.
-        </p>""", unsafe_allow_html=True)
+        </p>""")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -684,7 +689,7 @@ with t3:
                     f'<div style="font-size:.75rem;color:#64748b;line-height:1.6;">{body}</div></div>',
                     unsafe_allow_html=True
                 )
-            st.markdown("""
+            hmd("""
             <div class="insight">
                 <span style="font-size:.78rem;color:#cbd5e1;line-height:1.7;">
                 The error counts are <b style="color:#f1f5f9;">near-symmetric</b> (456 vs 470),
@@ -692,7 +697,7 @@ with t3:
                 It is genuinely confused by the <b>1°C stimulus difference</b>,
                 not making a systematic mistake.
                 </span>
-            </div>""", unsafe_allow_html=True)
+            </div>""")
 
     # ── Per-subject ──────────────────────────────────────────────────────────
     with perf_tabs[1]:
@@ -805,7 +810,7 @@ with t3:
                         unsafe_allow_html=True
                     )
 
-                st.markdown("""
+                hmd("""
                 <div class="insight" style="margin-top:.5rem;">
                     <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;
                         color:#818cf8;margin-bottom:.3rem;">Why the wide variance?</div>
@@ -815,7 +820,7 @@ with t3:
                         This is <b style="color:#e2e8f0;">inter-individual biology</b>,
                         not a model failure.
                     </p>
-                </div>""", unsafe_allow_html=True)
+                </div>""")
         else:
             st.info("Per-subject accuracy data not available. Run error_analysis_loso.py to generate it.")
 
@@ -883,12 +888,12 @@ with t3:
                 "Type":     st.column_config.TextColumn("Type",     width="medium"),
             }
         )
-        st.markdown("""
+        hmd("""
         <p style="font-size:.72rem;color:#334155;margin-top:.5rem;line-height:1.7;">
         * CrossMod-Transformer 2025 (87.5%) evaluates on all 87 BioVid subjects including
         20 non-reactive ones with flat biosignals, artificially inflating results.
         EmPath's LOSO-67 reactive-only protocol is the stricter, honest comparison.
-        </p>""", unsafe_allow_html=True)
+        </p>""")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -983,7 +988,7 @@ RF Landmark               RF Biosignal
 
         st.markdown('<div class="sh" style="margin-top:.5rem;">Performance Ceiling Analysis</div>',
                     unsafe_allow_html=True)
-        st.markdown("""
+        hmd("""
         <div class="insight">
             <div style="font-size:.8rem;color:#cbd5e1;line-height:1.75;">
                 All 26 architectural variants  -  including deep learning (TCN, MLP), foundation models
@@ -993,7 +998,7 @@ RF Landmark               RF Biosignal
                 and the <b style="color:#f1f5f9;">1°C stimulus difference between PA2 and PA3</b>,
                 not by model capacity. More complex architectures do not help here.
             </div>
-        </div>""", unsafe_allow_html=True)
+        </div>""")
 
         # Mini comparison chart
         arch_models = ["Chance", "PainFormer", "BIOT", "Biosignal RF", "Landmark RF",
@@ -1021,7 +1026,7 @@ with t5:
     clin_l, clin_r = st.columns(2, gap="large")
     with clin_l:
         st.markdown('<div class="sh">Clinical Motivation</div>', unsafe_allow_html=True)
-        st.markdown("""
+        hmd("""
         <div class="card card-accent-blue" style="margin-bottom:.7rem;">
             <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;
                 color:#38bdf8;margin-bottom:.5rem;">The Problem</div>
@@ -1046,7 +1051,7 @@ with t5:
                 the automated pain assessment literature.
             </p>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
         st.markdown('<div class="sh" style="margin-top:.5rem;">Required Hardware (SHAP-ranked)</div>',
                     unsafe_allow_html=True)
@@ -1076,7 +1081,7 @@ with t5:
 
     with clin_r:
         st.markdown('<div class="sh">Literature Comparison</div>', unsafe_allow_html=True)
-        st.markdown("""
+        hmd("""
         <div class="card" style="margin-bottom:.7rem;">
             <table style="width:100%;border-collapse:collapse;font-size:.79rem;">
                 <thead>
@@ -1114,10 +1119,10 @@ with t5:
                 * Includes 20 non-reactive subjects with flat biosignals.
             </p>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
         st.markdown('<div class="sh">System Properties</div>', unsafe_allow_html=True)
-        st.markdown("""
+        hmd("""
         <div class="card">
             <div style="font-size:.78rem;line-height:2.3;color:#64748b;">
                 <span style="color:#34d399;font-weight:700;">+</span> Non-invasive  -  no needles or procedures<br>
@@ -1130,7 +1135,7 @@ with t5:
                 <span style="color:#f87171;font-weight:700;">-</span> BioVid lab conditions  -  not ICU validated
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
         st.markdown('<div class="sh" style="margin-top:.5rem;">Dataset Overview</div>',
                     unsafe_allow_html=True)
@@ -1159,7 +1164,7 @@ with t5:
 # FOOTER
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown('<div class="hdiv"></div>', unsafe_allow_html=True)
-st.markdown("""
+hmd("""
 <div style="display:flex;justify-content:space-between;align-items:center;
             flex-wrap:wrap;gap:.5rem;padding:.5rem 0 1rem;">
     <div style="font-size:.68rem;color:#334155;line-height:1.9;">
@@ -1176,4 +1181,4 @@ st.markdown("""
         <span class="tag tag-r">BioVid Database</span>
     </div>
 </div>
-""", unsafe_allow_html=True)
+""")
