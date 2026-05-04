@@ -12,10 +12,12 @@ import plotly.graph_objects as go
 import plotly.express as px
 import streamlit as st
 
-# Helper: strips leading/trailing whitespace so HTML strings start
-# with '<' rather than '\n<', which is required for Streamlit to render HTML
+# Helper: use st.html() (Streamlit >= 1.32) for all raw HTML blocks.
+# st.html() bypasses the markdown parser entirely and renders HTML directly,
+# unlike st.markdown(unsafe_allow_html=True) which newer Streamlit versions
+# restrict for non-style tags.
 def hmd(content: str) -> None:
-    st.markdown(content.strip(), unsafe_allow_html=True)
+    st.html(content.strip())
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PAGE CONFIG
